@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Variables de entorno locales
+.env.local
+.env.* tu editor de código.
+
+**3. Añade `.env.local` al Archivo**
+
+.env.local
