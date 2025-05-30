@@ -1,5 +1,5 @@
 // src/components/forms/ContactForm.tsx
-"use client"; // Formularios con estado suelen ser client components
+"use client";
 
 import { useState } from 'react';
 
@@ -11,7 +11,7 @@ const ContactForm = () => {
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitMessage, setSubmitMessage] = useState('');
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error' | ''; message: string }>({ type: '', message: '' });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -21,26 +21,37 @@ const ContactForm = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setSubmitMessage('');
+    setSubmitStatus({ type: '', message: '' });
 
-    // Aquí iría la lógica de envío del formulario (ej. a una API)
-    // Por ahora, simularemos un envío:
-    console.log('Form data:', formData);
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simula delay de red
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
 
-    // Simulación de respuesta
-    const success = Math.random() > 0.3; // Simula éxito o error
-    if (success) {
-      setSubmitMessage('¡Gracias! Tu mensaje ha sido enviado.');
-      setFormData({ name: '', phone: '', email: '', message: '' }); // Limpiar formulario
-    } else {
-      setSubmitMessage('Hubo un error al enviar tu mensaje. Por favor, intenta de nuevo.');
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({ type: 'success', message: '¡Gracias! Tu mensaje ha sido enviado.' });
+        setFormData({ name: '', phone: '', email: '', message: '' }); // Limpiar formulario
+      } else {
+        setSubmitStatus({ type: 'error', message: result.error || 'Hubo un error al enviar tu mensaje. Por favor, intenta de nuevo.' });
+        console.error("Error del servidor:", result);
+      }
+    } catch (error) {
+      console.error('Error de red o al procesar la solicitud:', error);
+      setSubmitStatus({ type: 'error', message: 'Error de conexión. Por favor, revisa tu red e intenta de nuevo.' });
     }
+
     setIsSubmitting(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* ... (campos del formulario como antes) ... */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
           Nombre completo
@@ -105,14 +116,14 @@ const ContactForm = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-600 hover:bg-red-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red disabled:opacity-50 transition-colors duration-300"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#DC2626] hover:bg-[#B91C1C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red disabled:opacity-50 transition-colors duration-300"
         >
           {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
         </button>
       </div>
-      {submitMessage && (
-        <p className={`mt-4 text-sm ${submitMessage.includes('error') ? 'text-red-600' : 'text-green-600'}`}>
-          {submitMessage}
+      {submitStatus.message && (
+        <p className={`mt-4 text-sm ${submitStatus.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+          {submitStatus.message}
         </p>
       )}
     </form>
