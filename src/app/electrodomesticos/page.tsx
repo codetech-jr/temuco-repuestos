@@ -1,10 +1,9 @@
 // src/app/electrodomesticos/page.tsx
 import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard'; // REUTILIZANDO
-import { electrodomesticosData, Electrodomestico } from '@/app/data/electrodomesticos'; // CAMBIADO
+import ProductCard from '@/components/ui/ProductCard';
+import { electrodomesticosData, Electrodomestico } from '@/app/data/electrodomesticos';
 import type { Metadata } from 'next';
 
-// REUTILIZANDO COMPONENTES DE CATÁLOGO
 import SearchBar from '@/components/catalog/SearchBar';
 import CategoryFilter from '@/components/catalog/CategoryFilter';
 import BrandFilter from '@/components/catalog/BrandFilter';
@@ -13,13 +12,11 @@ import PaginationControls from '@/components/catalog/PaginationControls';
 
 const ITEMS_PER_PAGE = 8;
 
-// METADATA ESPECÍFICA
 export const metadata: Metadata = {
   title: 'Catálogo de Electrodomésticos - Temuco Repuestos',
   description: 'Encuentra los mejores electrodomésticos para tu hogar: refrigeradores, lavadoras, cocinas y más.',
 };
 
-// PROPS ESPECÍFICAS (LA INTERFAZ ES LA MISMA)
 interface ElectrodomesticosPageProps {
   searchParams: {
     q?: string;
@@ -30,36 +27,35 @@ interface ElectrodomesticosPageProps {
   };
 }
 
-// --- FUNCIÓN getElectrodomesticosData ADAPTADA ---
 async function getElectrodomesticosData(searchParams: ElectrodomesticosPageProps['searchParams']): Promise<{ electrodomesticos: Electrodomestico[], totalPages: number, currentPage: number, totalItems: number }> {
-  let itemsToFilter = [...electrodomesticosData]; // USA DATOS DE ELECTRODOMÉSTICOS
+  let itemsToFilter = [...electrodomesticosData];
 
-  // 1. Búsqueda
   if (searchParams.q) {
     const searchTerm = searchParams.q.toLowerCase();
     itemsToFilter = itemsToFilter.filter(item =>
       item.name.toLowerCase().includes(searchTerm) ||
-      item.shortDescription.toLowerCase().includes(searchTerm) ||
-      (item.brand && item.brand.toLowerCase().includes(searchTerm)) // Aquí usas searchParams.brand implícitamente si searchTerm coincide con una marca
+      (item.shortDescription && item.shortDescription.toLowerCase().includes(searchTerm)) ||
+      (item.brand && item.brand.toLowerCase().includes(searchTerm))
     );
   }
 
-  // 2. Filtro por Categoría
   if (searchParams.category) {
-    itemsToFilter = itemsToFilter.filter(item => item.category === searchParams.category);
+    itemsToFilter = itemsToFilter.filter(item =>
+      item.category && item.category.toLowerCase() === searchParams.category?.toLowerCase()
+    );
   }
 
-  // 3. Filtro por Marca
-  if (searchParams.brand) { // <--- CORREGIDO a searchParams.brand
-    itemsToFilter = itemsToFilter.filter(item => item.brand === searchParams.brand); // <--- CORREGIDO a searchParams.brand
+  if (searchParams.brand) {
+    itemsToFilter = itemsToFilter.filter(item =>
+      item.brand && item.brand.toLowerCase() === searchParams.brand?.toLowerCase()
+    );
   }
 
-  // 4. Ordenación
   if (searchParams.sort) {
     const [sortBy, sortOrder] = searchParams.sort.split('_');
     itemsToFilter.sort((a, b) => {
-      let valA = a[sortBy as keyof Electrodomestico];
-      let valB = b[sortBy as keyof Electrodomestico];
+      let valA = a[sortBy as keyof Electrodomestico] as any;
+      let valB = b[sortBy as keyof Electrodomestico] as any;
 
       if (sortBy === 'price') {
         valA = Number(valA);
@@ -75,7 +71,6 @@ async function getElectrodomesticosData(searchParams: ElectrodomesticosPageProps
     });
   }
 
-  // 5. Paginación
   const totalItems = itemsToFilter.length;
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const currentPage = Math.max(1, Math.min(page, Math.ceil(totalItems / ITEMS_PER_PAGE) || 1));
@@ -86,10 +81,8 @@ async function getElectrodomesticosData(searchParams: ElectrodomesticosPageProps
 
   return { electrodomesticos: paginatedElectrodomesticos, totalPages, currentPage, totalItems };
 }
-// --- FIN DE getElectrodomesticosData ---
 
-// FUNCIONES HELPER ADAPTADAS
-const getUniqueCategories = (data: Electrodomestico[]): string[] => Array.from(new Set(data.map(item => item.category))).sort();
+const getUniqueCategories = (data: Electrodomestico[]): string[] => Array.from(new Set(data.map(item => item.category).filter(Boolean) as string[])).sort();
 const getUniqueBrands = (data: Electrodomestico[]): string[] => Array.from(new Set(data.map(item => item.brand).filter(Boolean) as string[])).sort();
 
 
@@ -100,65 +93,68 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
   const allBrands = getUniqueBrands(electrodomesticosData);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    // Fondo general de la página: Casi blanco azulado
+    <div className="bg-[#F7FAFC] min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12">
         <header className="mb-8 md:mb-12 text-center">
-          {/* TÍTULO ESPECÍFICO */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-900">
+          {/* Título de página: Azul oscuro principal */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#002A7F]">
             Catálogo de Electrodomésticos
           </h1>
-          <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+          {/* Descripción de página: Gris oscuro azulado */}
+          <p className="mt-2 text-base sm:text-lg text-[#2D3748] max-w-2xl mx-auto">
             Descubre nuestra selección de electrodomésticos para equipar tu hogar con la mejor tecnología y calidad.
           </p>
         </header>
 
-        {/* FILTROS (REUTILIZADOS) */}
-        <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 bg-white rounded-lg shadow">
-          <SearchBar /> {/* Puedes pasarle un placeholder diferente si quieres */}
+        {/* Barra de filtros y búsqueda: Fondo blanco, sombra */}
+        <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 md:p-6 bg-white rounded-lg shadow-md">
+          <SearchBar placeholder="Buscar electrodomésticos..." />
           <CategoryFilter categories={allCategories} />
           <BrandFilter brands={allBrands} />
           <SortDropdown />
         </div>
 
         {totalItems > 0 && (
-          <p className="mb-6 text-sm text-gray-600">
+          // Texto de conteo de ítems: Gris medio
+          <p className="mb-6 text-sm text-[#718096]">
             Mostrando {electrodomesticos.length} de {totalItems} electrodomésticos.
           </p>
         )}
 
         {electrodomesticos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-            {/* MAPEANDO SOBRE 'electrodomesticos' */}
             {electrodomesticos.map((item) => (
               <ProductCard
                 key={item.id}
-                product={{ // Asegúrate que ProductCard pueda manejar estos datos
+                product={{
                   id: item.id,
                   name: item.name,
                   imageUrl: item.imageUrl,
-                  altText: item.name,
+                  altText: item.altText || item.name,
                   rating: item.rating || 0,
                   reviewCount: item.reviewCount || 0,
                   price: item.price,
                   originalPrice: item.originalPrice,
-                  link: `/electrodomesticos/${item.slug}`, // RUTA CORRECTA
+                  tag: item.tag,
+                  link: `/electrodomesticos/${item.slug}`,
                 }}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-xl text-gray-500">
+            {/* Mensaje "No encontrado": Texto gris medio */}
+            <p className="text-xl text-[#718096]">
               No se encontraron electrodomésticos que coincidan con tu búsqueda o filtros.
             </p>
-            {/* ENLACE CORRECTO */}
-            <Link href="/electrodomesticos" className="mt-4 inline-block text-brand-blue hover:underline">
+            {/* Enlace "Limpiar": Texto azul oscuro principal, hover azul muy oscuro */}
+            <Link href="/electrodomesticos" className="mt-4 inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">
               Limpiar búsqueda y filtros
             </Link>
           </div>
         )}
 
-        {/* PAGINACIÓN (REUTILIZADA) */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

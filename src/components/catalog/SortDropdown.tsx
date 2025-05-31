@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 const sortOptions = [
-  { label: 'Relevancia', value: '' }, // O 'default'
+  { label: 'Relevancia', value: '' },
   { label: 'Precio: Menor a Mayor', value: 'price_asc' },
   { label: 'Precio: Mayor a Menor', value: 'price_desc' },
   { label: 'Nombre: A-Z', value: 'name_asc' },
@@ -33,18 +33,26 @@ const SortDropdown = () => {
     } else {
       params.delete('sort');
     }
-    // No resetear la página aquí, la ordenación se aplica a la página actual
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false }); // { scroll: false } para UX
   };
 
   return (
     <div className="w-full md:w-auto">
-      <label htmlFor="sort" className="sr-only">Ordenar por</label>
+      {/* Cambiado id para unicidad, aunque si solo hay un "sort" en la página podría no ser estrictamente necesario, es buena práctica. */}
+      <label htmlFor="sort-filter-dropdown" className="sr-only">Ordenar por</label>
       <select
-        id="sort"
+        id="sort-filter-dropdown" // Asegúrate que el id sea único y coincida con htmlFor
         value={selectedSort}
         onChange={handleSortChange}
-        className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue sm:text-sm bg-white"
+        // Clases de estilo con tu paleta:
+        // Borde: Gris medio
+        // Texto: Gris oscuro azulado
+        // Fondo: Blanco
+        // Focus: Anillo azul oscuro principal y borde azul oscuro principal
+        className="block w-full px-4 py-2 border border-[#718096] rounded-md shadow-sm 
+                   text-[#2D3748] bg-white 
+                   focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F] 
+                   sm:text-sm transition-colors duration-150"
       >
         {sortOptions.map((option) => (
           <option key={option.value} value={option.value}>

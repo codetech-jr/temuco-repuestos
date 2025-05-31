@@ -24,7 +24,7 @@ const ContactForm = () => {
     setSubmitStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch('/api/send-email', {
+      const response = await fetch('/api/send-email', { // Asegúrate que esta API exista y funcione
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ const ContactForm = () => {
 
       if (response.ok) {
         setSubmitStatus({ type: 'success', message: '¡Gracias! Tu mensaje ha sido enviado.' });
-        setFormData({ name: '', phone: '', email: '', message: '' }); // Limpiar formulario
+        setFormData({ name: '', phone: '', email: '', message: '' });
       } else {
         setSubmitStatus({ type: 'error', message: result.error || 'Hubo un error al enviar tu mensaje. Por favor, intenta de nuevo.' });
         console.error("Error del servidor:", result);
@@ -49,11 +49,16 @@ const ContactForm = () => {
     setIsSubmitting(false);
   };
 
+  // Clases comunes para inputs y textarea
+  const inputBaseClasses = "block w-full px-4 py-3 border rounded-md shadow-sm sm:text-sm";
+  const inputColorClasses = "border-[#718096] placeholder-gray-400 text-[#2D3748]"; // Borde gris medio, texto gris oscuro azulado
+  const inputFocusClasses = "focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F]"; // Focus con azul oscuro principal
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* ... (campos del formulario como antes) ... */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        {/* Label: Gris oscuro azulado */}
+        <label htmlFor="name" className="block text-sm font-medium text-[#2D3748] mb-1">
           Nombre completo
         </label>
         <input
@@ -63,12 +68,12 @@ const ContactForm = () => {
           value={formData.name}
           onChange={handleChange}
           required
-          className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-blue focus:border-brand-blue sm:text-sm"
+          className={`${inputBaseClasses} ${inputColorClasses} ${inputFocusClasses}`}
           placeholder="Tu nombre"
         />
       </div>
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="phone" className="block text-sm font-medium text-[#2D3748] mb-1">
           Teléfono
         </label>
         <input
@@ -78,12 +83,12 @@ const ContactForm = () => {
           value={formData.phone}
           onChange={handleChange}
           required
-          className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-blue focus:border-brand-blue sm:text-sm"
+          className={`${inputBaseClasses} ${inputColorClasses} ${inputFocusClasses}`}
           placeholder="Tu número de teléfono"
         />
       </div>
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-[#2D3748] mb-1">
           Correo electrónico
         </label>
         <input
@@ -93,12 +98,12 @@ const ContactForm = () => {
           value={formData.email}
           onChange={handleChange}
           required
-          className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-blue focus:border-brand-blue sm:text-sm"
+          className={`${inputBaseClasses} ${inputColorClasses} ${inputFocusClasses}`}
           placeholder="tu@ejemplo.com"
         />
       </div>
       <div>
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="message" className="block text-sm font-medium text-[#2D3748] mb-1">
           ¿En qué podemos ayudarte?
         </label>
         <textarea
@@ -108,21 +113,23 @@ const ContactForm = () => {
           value={formData.message}
           onChange={handleChange}
           required
-          className="block w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-brand-blue focus:border-brand-blue sm:text-sm"
+          className={`${inputBaseClasses} ${inputColorClasses} ${inputFocusClasses}`}
           placeholder="Escribe tu mensaje aquí..."
         />
       </div>
       <div>
+        {/* Botón de envío: Fondo rojo, hover azul muy oscuro, texto casi blanco azulado */}
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#DC2626] hover:bg-[#B91C1C] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-red disabled:opacity-50 transition-colors duration-300"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-[#F7FAFC] bg-[#C8102E] hover:bg-[#002266] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C8102E] disabled:opacity-50 transition-colors duration-300"
         >
           {isSubmitting ? 'Enviando...' : 'Enviar Solicitud'}
         </button>
       </div>
       {submitStatus.message && (
-        <p className={`mt-4 text-sm ${submitStatus.type === 'error' ? 'text-red-600' : 'text-green-600'}`}>
+        // Mensaje de estado: Error con rojo de marca, éxito con verde estándar
+        <p className={`mt-4 text-sm ${submitStatus.type === 'error' ? 'text-[#C8102E]' : 'text-green-600'}`}>
           {submitStatus.message}
         </p>
       )}

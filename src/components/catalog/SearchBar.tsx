@@ -2,10 +2,9 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { useState, useEffect, useCallback } from 'react'; // Añadir useCallback
+import { useState, useEffect, useCallback } from 'react';
 import { IoSearch } from 'react-icons/io5';
 
-// Función debounce simple
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
   let timeout: NodeJS.Timeout;
   return (...args: Parameters<F>): Promise<ReturnType<F>> =>
@@ -17,15 +16,17 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
     });
 }
 
+interface SearchBarProps {
+  placeholder?: string; // Para poder personalizar el placeholder desde el padre
+}
 
-const SearchBar = () => {
+const SearchBar = ({ placeholder = "Buscar repuestos..." }: SearchBarProps) => { // Valor por defecto para placeholder
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentQuery = searchParams.get('q') || '';
   const [searchTerm, setSearchTerm] = useState(currentQuery);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
     debounce((term: string) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -35,30 +36,24 @@ const SearchBar = () => {
         params.delete('q');
       }
       params.set('page', '1');
-      router.push(`${pathname}?${params.toString()}`, { scroll: false }); // { scroll: false } para no saltar al inicio
-    }, 500), // 500ms de debounce
-    [pathname, router, searchParams] // Dependencias de useCallback
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    }, 500),
+    [pathname, router, searchParams]
   );
 
   useEffect(() => {
-    // Solo llamar a debouncedSearch si el searchTerm actual es diferente del query param
-    // para evitar bucles o llamadas innecesarias al cargar la página.
     if (searchTerm !== currentQuery) {
       debouncedSearch(searchTerm);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, debouncedSearch]); // No añadir currentQuery aquí para evitar bucle
+  }, [searchTerm, debouncedSearch]); // No añadir currentQuery aquí
 
-  // Actualizar searchTerm si el query param cambia externamente (ej. por navegación)
   useEffect(() => {
     setSearchTerm(currentQuery);
   }, [currentQuery]);
 
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Forzar la búsqueda inmediatamente al presionar enter o el botón
-    // Esto cancelará cualquier debounce pendiente y ejecutará la búsqueda
     const params = new URLSearchParams(searchParams.toString());
     if (searchTerm.trim()) {
         params.set('q', searchTerm.trim());
@@ -66,21 +61,38 @@ const SearchBar = () => {
         params.delete('q');
     }
     params.set('page', '1');
-    router.push(`${pathname}?${params.toString()}`);
+    // Empujar inmediatamente, cancelando cualquier debounce en curso
+    clearTimeout((debouncedSearch as any).timeout); // Acceso a timeout si está expuesto o manejo interno en debounce
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full md:w-1/2 lg:w-1/3">
+      {/* Input de búsqueda */}
       <input
-        type="text"
+        type="search" // 'search' type es más semántico y puede ofrecer UI nativa (ej. botón 'x')
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)} // Actualiza el estado, el useEffect hará el debounce
-        placeholder="Buscar repuestos..."
-        className="flex-grow px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-brand-blue sm:text-sm"
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder={placeholder} // Usar prop de placeholder
+        // Clases de estilo con tu paleta:
+        // Borde: Gris medio
+        // Texto: Gris oscuro azulado
+        // Placeholder: Gris por defecto de Tailwind (o #718096)
+        // Focus: Anillo azul oscuro principal y borde azul oscuro principal
+        className="flex-grow px-4 py-2 border border-[#718096] rounded-l-md 
+                   text-[#2D3748] bg-white placeholder-gray-400 
+                   focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F] 
+                   sm:text-sm transition-colors duration-150"
       />
+      {/* Botón de búsqueda */}
       <button
         type="submit"
-        className="bg-brand-blue text-white px-4 py-2 rounded-r-md hover:bg-brand-blue-dark transition-colors duration-300"
+        // Fondo: Azul oscuro principal
+        // Texto/Icono: Blanco
+        // Hover: Azul muy oscuro
+        className="bg-[#002A7F] text-white px-3 py-[9px] sm:px-4 rounded-r-md 
+                   hover:bg-[#002266] 
+                   transition-colors duration-300"
         aria-label="Buscar"
       >
         <IoSearch size={22} />

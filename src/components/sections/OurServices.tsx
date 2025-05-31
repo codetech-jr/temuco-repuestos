@@ -4,50 +4,82 @@
 import ServiceCard, { Service } from '@/components/ui/ServiceCard';
 
 // Importa los íconos de react-icons
-import { FaWrench, FaSnowflake } from 'react-icons/fa'; // Font Awesome
-import { HiShieldCheck } from 'react-icons/hi2'; // Heroicons v2 (puedes usar HiShieldCheck de 'react-icons/hi' para v1)
+import { FaWrench, FaSnowflake } from 'react-icons/fa';
+import { HiShieldCheck } from 'react-icons/hi2';
+import { MdBuild, MdAcUnit, MdOutlineSecurity, MdDeliveryDining } from 'react-icons/md'; // Otros ejemplos de íconos
+import { RiToolsFill } from "react-icons/ri"; // Para Asesorías
+import { TbTruckDelivery } from "react-icons/tb"; // Para Delivery
 
 
-// Datos de ejemplo para los servicios, ahora con react-icons
+// Datos actualizados para coincidir con los de servicios.ts (adaptados)
+// Es importante que los 'id' y 'link' (slug) aquí coincidan con los slugs de serviciosDetalleData
+// si quieres que enlacen correctamente a las páginas de detalle.
 const servicesData: Service[] = [
   {
-    id: 'servicio1',
-    // Pasamos el componente del ícono directamente.
-    // Puedes pasar props como 'size' o 'className' aquí si quieres un control más granular
-    // por ícono, o dejar que ServiceCard maneje el tamaño general.
-    icon: <FaWrench />,
-    title: 'Reparación de Electrodomésticos',
-    description: 'Servicio técnico especializado para todo tipo de electrodomésticos con garantía de trabajo.',
-    link: '/servicios/reparacion',
-    buttonText: 'Solicitar Servicio',
+    id: 's001', // Coincide con servicio-tecnico
+    icon: <FaWrench />, // Ícono para Servicio Técnico
+    title: 'Servicio Técnico Especializado',
+    description: 'Reparación profesional de electrodomésticos y equipos de refrigeración con garantía.',
+    link: '/servicios/servicio-tecnico',
+    buttonText: 'Saber Más',
   },
   {
-    id: 'servicio2',
-    icon: <FaSnowflake />,
-    title: 'Instalación de Sistemas de Refrigeración',
-    description: 'Instalación profesional de aires acondicionados, cámaras frigoríficas y sistemas comerciales.',
-    link: '/servicios/instalacion-refrigeracion',
-    buttonText: 'Solicitar Servicio',
+    id: 's002', // Coincide con instalacion
+    icon: <MdAcUnit />, // Ícono para Instalación
+    title: 'Instalación Profesional de Equipos',
+    description: 'Instalamos tus nuevos electrodomésticos y sistemas de aire acondicionado.',
+    link: '/servicios/instalacion',
+    buttonText: 'Saber Más',
   },
   {
-    id: 'servicio3',
-    icon: <HiShieldCheck />, // Heroicons v2 son más estilizados como en la maqueta
+    id: 's003', // Coincide con mantenimiento
+    icon: <HiShieldCheck />, // Ícono para Mantenimiento
     title: 'Mantenimiento Preventivo',
-    description: 'Planes de mantenimiento para extender la vida útil de sus equipos y prevenir fallas.',
-    link: '/servicios/mantenimiento-preventivo',
-    buttonText: 'Solicitar Servicio',
+    description: 'Prolonga la vida útil de tus equipos y evita fallas costosas con nuestros planes.',
+    link: '/servicios/mantenimiento',
+    buttonText: 'Saber Más',
+  },
+  // Puedes añadir más servicios si los tienes en serviciosDetalleData y quieres mostrarlos aquí
+  // Ejemplo:
+  {
+    id: 's004', // Coincide con garantias
+    icon: <MdOutlineSecurity />,
+    title: 'Gestión de Garantías',
+    description: 'Te asistimos en el proceso de garantía de tus equipos con el fabricante.',
+    link: '/servicios/garantias',
+    buttonText: 'Saber Más',
+  },
+  {
+    id: 's005', // Coincide con asesorias
+    icon: <RiToolsFill />, // Ícono más genérico para asesorías
+    title: 'Asesorías Técnicas',
+    description: 'Te orientamos en la elección, uso y optimización de tus electrodomésticos.',
+    link: '/servicios/asesorias',
+    buttonText: 'Saber Más',
+  },
+  {
+    id: 's006', // Coincide con delivery-repuestos
+    icon: <TbTruckDelivery />, // Ícono para Delivery
+    title: 'Delivery de Repuestos',
+    description: 'Recibe tus repuestos directamente en la comodidad de tu hogar o taller.',
+    link: '/servicios/delivery-repuestos',
+    buttonText: 'Saber Más',
   },
 ];
 
 const OurServices = () => {
   return (
-    <section className="py-12 md:py-16 bg-gray-100">
+    // Fondo de sección: Casi blanco azulado
+    <section className="py-12 md:py-16 bg-[#F7FAFC]">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center text-blue-900 mb-10 md:mb-12">
+        {/* Título de sección: Azul oscuro principal */}
+        <h2 className="text-3xl md:text-4xl font-bold text-center text-[#002A7F] mb-10 md:mb-12">
           Nuestros Servicios
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* El grid ahora puede mostrar hasta 6 servicios en dos filas en LG */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {servicesData.map((service) => (
+            // ServiceCard ya debería estar estilizado con la paleta
             <ServiceCard key={service.id} service={service} />
           ))}
         </div>

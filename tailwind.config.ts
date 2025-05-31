@@ -1,5 +1,7 @@
 // tailwind.config.ts
 import type { Config } from 'tailwindcss'
+import typography from '@tailwindcss/typography' // <--- Importa el plugin
+
 
 const config: Config = {
   content: [
@@ -9,6 +11,18 @@ const config: Config = {
   ],
   theme: {
     extend: {
+              container: {
+            center: true,
+            padding:{
+                DEFAULT: "1rem",
+                md: "2rem"
+            }, 
+        },
+        screens: {
+            sm: '375px',
+            md: '768px',
+            lg: '1200px',
+        },
       colors: {
         'brand-blue': { // Puedes nombrar tus colores como quieras
           DEFAULT: '#0A4D8C', // Un azul principal (ejemplo)
@@ -30,6 +44,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [ typography, ],
 }
 export default config

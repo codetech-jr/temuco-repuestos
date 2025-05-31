@@ -31,7 +31,7 @@ export default function RootLayout({
     <html lang="es">
       <body className={`${openSans.variable} ${montserrat.variable} antialiased`}>
         <Header />
-        <main>{children}</main>
+        <main className="">{children}</main>
         <Footer />
       </body>
     </html>

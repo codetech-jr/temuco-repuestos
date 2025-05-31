@@ -7,7 +7,7 @@ import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 interface PaginationControlsProps {
   currentPage: number;
   totalPages: number;
-  itemsPerPage: number; // Para referencia, no se usa directamente para la navegación aquí
+  itemsPerPage: number;
 }
 
 const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps) => {
@@ -20,20 +20,19 @@ const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps
 
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', newPage.toString());
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false }); // { scroll: false } para UX
   };
 
   if (totalPages <= 1) {
-    return null; // No mostrar paginación si solo hay una página o ninguna
+    return null;
   }
 
-  // Generar números de página (lógica simple, se puede mejorar para muchos números)
   const pageNumbers = [];
-  const maxPageButtons = 5; // Máximo de botones de número de página a mostrar
+  const maxPageButtons = 5;
   let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
   let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
-  if (endPage - startPage + 1 < maxPageButtons && totalPages >= maxPageButtons) {
+  if (totalPages >= maxPageButtons && endPage - startPage + 1 < maxPageButtons) {
     startPage = Math.max(1, endPage - maxPageButtons + 1);
   }
   
@@ -41,13 +40,29 @@ const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps
     pageNumbers.push(i);
   }
 
+  // Clases base para botones de paginación
+  const baseButtonClass = "px-3 py-2 text-sm font-medium border rounded-md transition-colors duration-150";
+  const disabledButtonClass = "disabled:opacity-60 disabled:cursor-not-allowed";
+
+  // Clases para botones Anterior/Siguiente
+  const navButtonTextClass = "text-[#002A7F] disabled:text-[#718096]"; // Azul oscuro, gris medio cuando está deshabilitado
+  const navButtonBgClass = "bg-white hover:bg-[#EBF4FF] hover:text-[#002266] hover:border-[#002A7F]";
+  const navButtonBorderClass = "border-[#718096]"; // Borde gris medio
+
+  // Clases para botones de número de página inactivos
+  const inactivePageButtonTextClass = "text-[#2D3748]"; // Gris oscuro azulado
+  const inactivePageButtonBgClass = "bg-white hover:bg-[#EBF4FF] hover:text-[#002266] hover:border-[#002A7F]";
+  const inactivePageButtonBorderClass = "border-[#EBF4FF]"; // Borde azul muy pálido
+
+  // Clases para el botón de página activa
+  const activePageButtonClass = "bg-[#002A7F] text-[#F7FAFC] border-[#002A7F] z-10"; // Fondo azul oscuro, texto casi blanco
 
   return (
-    <nav aria-label="Paginación de resultados" className="flex items-center justify-center space-x-2 mt-10 md:mt-12">
+    <nav aria-label="Paginación de resultados" className="flex items-center justify-center space-x-1 sm:space-x-2 mt-10 md:mt-12">
       <button
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+        className={`${baseButtonClass} ${navButtonTextClass} ${navButtonBgClass} ${navButtonBorderClass} ${disabledButtonClass} flex items-center`}
         aria-label="Página anterior"
       >
         <IoChevronBack className="mr-1 h-5 w-5" />
@@ -58,23 +73,23 @@ const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps
         <>
           <button
             onClick={() => handlePageChange(1)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className={`${baseButtonClass} ${inactivePageButtonTextClass} ${inactivePageButtonBgClass} ${inactivePageButtonBorderClass}`}
           >
             1
           </button>
-          {startPage > 2 && <span className="px-2 py-2 text-sm text-gray-500">...</span>}
+          {/* Elipsis: Gris medio */}
+          {startPage > 2 && <span className="px-1 sm:px-2 py-2 text-sm text-[#718096]">...</span>}
         </>
       )}
-
 
       {pageNumbers.map((pageNumber) => (
         <button
           key={pageNumber}
           onClick={() => handlePageChange(pageNumber)}
-          className={`px-4 py-2 text-sm font-medium border rounded-md
+          className={`${baseButtonClass} 
             ${currentPage === pageNumber
-              ? 'bg-brand-blue text-white border-brand-blue z-10'
-              : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'
+              ? activePageButtonClass
+              : `${inactivePageButtonTextClass} ${inactivePageButtonBgClass} ${inactivePageButtonBorderClass}`
             }`}
           aria-current={currentPage === pageNumber ? 'page' : undefined}
         >
@@ -84,10 +99,11 @@ const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps
 
       {endPage < totalPages && (
         <>
-         {endPage < totalPages -1 && <span className="px-2 py-2 text-sm text-gray-500">...</span>}
+         {/* Elipsis: Gris medio */}
+         {endPage < totalPages -1 && <span className="px-1 sm:px-2 py-2 text-sm text-[#718096]">...</span>}
           <button
             onClick={() => handlePageChange(totalPages)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className={`${baseButtonClass} ${inactivePageButtonTextClass} ${inactivePageButtonBgClass} ${inactivePageButtonBorderClass}`}
           >
             {totalPages}
           </button>
@@ -97,7 +113,7 @@ const PaginationControls = ({ currentPage, totalPages }: PaginationControlsProps
       <button
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+        className={`${baseButtonClass} ${navButtonTextClass} ${navButtonBgClass} ${navButtonBorderClass} ${disabledButtonClass} flex items-center`}
         aria-label="Página siguiente"
       >
         Siguiente

@@ -1,7 +1,7 @@
 // src/app/repuestos/page.tsx
 import Link from 'next/link';
 import ProductCard from '@/components/ui/ProductCard';
-import { repuestosData, Repuesto } from '@/app/data/repuestos'; // Sigue usando la misma fuente de datos
+import { repuestosData, Repuesto } from '@/app/data/repuestos';
 import type { Metadata } from 'next';
 
 import SearchBar from '@/components/catalog/SearchBar';
@@ -9,16 +9,14 @@ import CategoryFilter from '@/components/catalog/CategoryFilter';
 import BrandFilter from '@/components/catalog/BrandFilter';
 import SortDropdown from '@/components/catalog/SortDropdown';
 import PaginationControls from '@/components/catalog/PaginationControls';
-// Podrías tener un componente específico para seleccionar el "tipo" de repuesto (todos, originales, alternativos)
-// import TypeFilter from '@/components/catalog/TypeFilter';
 
 const ITEMS_PER_PAGE = 8;
 
-// La metadata podría ser más general o ajustarse dinámicamente si es necesario
 export async function generateMetadata({ searchParams }: RepuestosPageProps): Promise<Metadata> {
   const isOriginalsView = searchParams.tipo === 'originales' || searchParams.original === 'true';
   const title = isOriginalsView
     ? 'Repuestos Originales - Temuco Repuestos'
+    // Aplicando tu azul oscuro principal al título en metadata si es posible (esto es solo texto)
     : 'Catálogo de Repuestos - Temuco Repuestos';
   const description = isOriginalsView
     ? 'Encuentra repuestos originales de las mejores marcas para tus electrodomésticos.'
@@ -27,7 +25,6 @@ export async function generateMetadata({ searchParams }: RepuestosPageProps): Pr
   return { title, description };
 }
 
-
 interface RepuestosPageProps {
   searchParams: {
     q?: string;
@@ -35,28 +32,62 @@ interface RepuestosPageProps {
     brand?: string;
     sort?: string;
     page?: string;
-    tipo?: 'originales' | string; // Nuevo: para filtrar por tipo, ej. 'originales'
-    // o podrías usar original?: 'true';
+    tipo?: 'originales' | string;
   };
 }
 
 async function getRepuestosData(searchParams: RepuestosPageProps['searchParams']): Promise<{ repuestos: Repuesto[], totalPages: number, currentPage: number, totalItems: number }> {
   let itemsToFilter = [...repuestosData];
 
-  // --- NUEVO: Filtro por tipo (originales) ---
   const showOriginalsOnly = searchParams.tipo === 'originales' || searchParams.original === 'true';
   if (showOriginalsOnly) {
     itemsToFilter = itemsToFilter.filter(r => r.isOriginal === true);
   }
-  // Si tuvieras 'alternativos': else if (searchParams.tipo === 'alternativos') { itemsToFilter = itemsToFilter.filter(r => r.isOriginal === false); }
 
-  // El resto de los filtros (búsqueda, categoría, marca) se aplican DESPUÉS del filtro de tipo
-  if (searchParams.q) { /* ... lógica de búsqueda ... */ }
-  if (searchParams.category) { /* ... lógica de filtro de categoría ... */ }
-  if (searchParams.brand) { /* ... lógica de filtro de marca ... */ }
-  if (searchParams.sort) { /* ... lógica de ordenación ... */ }
+  if (searchParams.q) {
+    const searchTerm = searchParams.q.toLowerCase();
+    itemsToFilter = itemsToFilter.filter(repuesto =>
+      repuesto.name.toLowerCase().includes(searchTerm) ||
+      (repuesto.shortDescription && repuesto.shortDescription.toLowerCase().includes(searchTerm)) ||
+      (repuesto.brand && repuesto.brand.toLowerCase().includes(searchTerm))
+    );
+  }
 
-  // Lógica de Paginación (se aplica al final)
+  if (searchParams.category) {
+    itemsToFilter = itemsToFilter.filter(repuesto => {
+      const repuestoCategory = repuesto.category ? repuesto.category.toLowerCase() : '';
+      const searchCategory = searchParams.category ? searchParams.category.toLowerCase() : '';
+      return repuestoCategory === searchCategory;
+    });
+  }
+
+  if (searchParams.brand) {
+    const searchBrand = searchParams.brand.toLowerCase();
+    itemsToFilter = itemsToFilter.filter(repuesto =>
+      repuesto.brand && repuesto.brand.toLowerCase() === searchBrand
+    );
+  }
+
+  if (searchParams.sort) {
+    const [sortBy, sortOrder] = searchParams.sort.split('_');
+    itemsToFilter.sort((a, b) => {
+      let valA = a[sortBy as keyof Repuesto] as any; // Type assertion
+      let valB = b[sortBy as keyof Repuesto] as any; // Type assertion
+
+      if (sortBy === 'price') {
+        valA = Number(valA);
+        valB = Number(valB);
+      } else if (typeof valA === 'string' && typeof valB === 'string') {
+        valA = valA.toLowerCase();
+        valB = valB.toLowerCase();
+      }
+
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
   const totalItems = itemsToFilter.length;
   const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
   const currentPage = Math.max(1, Math.min(page, Math.ceil(totalItems / ITEMS_PER_PAGE) || 1));
@@ -68,13 +99,9 @@ async function getRepuestosData(searchParams: RepuestosPageProps['searchParams']
   return { repuestos: paginatedRepuestos, totalPages, currentPage, totalItems };
 }
 
-// Para los selectores de filtro, ahora necesitas decidir si mostrar todas las categorías/marcas
-// o solo las de los repuestos originales si ese filtro está activo.
-// Por simplicidad, aquí mostramos todas, pero podrías pasar `showOriginalsOnly`
-// a estas funciones para que filtren las opciones.
 const getUniqueCategories = (data: Repuesto[], filterForOriginalsOnly?: boolean): string[] => {
     const sourceData = filterForOriginalsOnly ? data.filter(r => r.isOriginal === true) : data;
-    return Array.from(new Set(sourceData.map(item => item.category))).sort();
+    return Array.from(new Set(sourceData.map(item => item.category).filter(Boolean) as string[])).sort();
 };
 const getUniqueBrands = (data: Repuesto[], filterForOriginalsOnly?: boolean): string[] => {
     const sourceData = filterForOriginalsOnly ? data.filter(r => r.isOriginal === true) : data;
@@ -84,10 +111,8 @@ const getUniqueBrands = (data: Repuesto[], filterForOriginalsOnly?: boolean): st
 
 export default async function RepuestosPage({ searchParams }: RepuestosPageProps) {
   const { repuestos, totalPages, currentPage, totalItems } = await getRepuestosData(searchParams);
-
   const isOriginalsView = searchParams.tipo === 'originales' || searchParams.original === 'true';
 
-  // Decide si las opciones de filtro deben basarse solo en originales o en todos
   const categoriesForFilter = getUniqueCategories(repuestosData, isOriginalsView);
   const brandsForFilter = getUniqueBrands(repuestosData, isOriginalsView);
 
@@ -97,28 +122,34 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
     : "Explora nuestra amplia gama de repuestos para electrodomésticos y sistemas de refrigeración.";
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    // Fondo general de la página: Casi blanco azulado
+    <div className="bg-[#F7FAFC] min-h-screen">
       <div className="container mx-auto px-4 py-8 md:py-12">
         <header className="mb-8 md:mb-12 text-center">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-blue-900">
+          {/* Título de página: Azul oscuro principal */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#002A7F]">
             {pageTitle}
           </h1>
-          <p className="mt-2 text-base sm:text-lg text-gray-600 max-w-2xl mx-auto">
+          {/* Descripción de página: Gris oscuro azulado */}
+          <p className="mt-2 text-base sm:text-lg text-[#2D3748] max-w-2xl mx-auto">
             {pageDescription}
           </p>
         </header>
 
-        <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 bg-white rounded-lg shadow">
+        {/* Barra de filtros y búsqueda: Fondo blanco, sombra */}
+        <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 md:p-6 bg-white rounded-lg shadow-md">
+          {/* Los componentes de filtro (SearchBar, CategoryFilter, etc.) deben estilizarse internamente
+              con la paleta de colores. Ej: inputs con border-[#718096], focus:ring-[#002A7F],
+              botones de búsqueda con bg-[#002A7F] hover:bg-[#002266] */}
           <SearchBar placeholder={isOriginalsView ? "Buscar repuestos originales..." : "Buscar repuestos..."} />
-          {/* Podrías tener un TypeFilter aquí para seleccionar "Todos", "Originales", "Alternativos" */}
-          {/* <TypeFilter /> */}
           <CategoryFilter categories={categoriesForFilter} />
           <BrandFilter brands={brandsForFilter} />
           <SortDropdown />
         </div>
 
         {totalItems > 0 && (
-          <p className="mb-6 text-sm text-gray-600">
+          // Texto de conteo de ítems: Gris medio
+          <p className="mb-6 text-sm text-[#718096]">
             Mostrando {repuestos.length} de {totalItems} {isOriginalsView ? "repuestos originales" : "repuestos"}.
           </p>
         )}
@@ -128,16 +159,16 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
             {repuestos.map((item) => (
               <ProductCard
                 key={item.id}
-                product={{ // El objeto que espera ProductCard
+                product={{
                   id: item.id,
                   name: item.name,
                   imageUrl: item.imageUrl,
-                  altText: item.name, // Añadir altText
-                  rating: item.rating || 0, // Añadir rating (con valor por defecto)
-                  reviewCount: item.reviewCount || 0, // Añadir reviewCount (con valor por defecto)
-                  price: item.price, // <--- AÑADIR EL PRECIO
-                  originalPrice: item.originalPrice, // <--- AÑADIR PRECIO ORIGINAL (si existe)
-                  // tag: item.tag, // Si tienes un campo 'tag' en tu interfaz Repuesto
+                  altText: item.altText || item.name, // Usar altText si existe, sino el nombre
+                  rating: item.rating || 0,
+                  reviewCount: item.reviewCount || 0,
+                  price: item.price,
+                  originalPrice: item.originalPrice,
+                  tag: item.tag, // Asegúrate que 'tag' exista en tu tipo 'Repuesto' si lo usas
                   link: `/repuestos/${item.slug}`,
                 }}
               />
@@ -145,15 +176,21 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
           </div>
         ) : (
           <div className="text-center py-12">
-            <p className="text-xl text-gray-500">
+            {/* Mensaje "No encontrado": Texto gris medio */}
+            <p className="text-xl text-[#718096]">
               No se encontraron {isOriginalsView ? "repuestos originales" : "repuestos"} que coincidan con tu búsqueda o filtros.
             </p>
-            <Link href="/repuestos" className="mt-4 inline-block text-brand-blue hover:underline">
+            {/* Enlace "Ver todos": Texto azul oscuro principal, hover azul muy oscuro */}
+            <Link href="/repuestos" className="mt-4 inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">
               Ver todos los repuestos
             </Link>
           </div>
         )}
 
+        {/* PaginationControls debe estilizarse internamente con la paleta:
+            - Ítem activo: bg-[#002A7F] text-[#F7FAFC]
+            - Ítems inactivos: text-[#718096] hover:bg-[#EBF4FF] hover:text-[#002A7F]
+            - Flechas: text-[#002A7F] */}
         <PaginationControls
           currentPage={currentPage}
           totalPages={totalPages}

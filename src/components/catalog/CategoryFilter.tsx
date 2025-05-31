@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 interface CategoryFilterProps {
-  categories: string[]; // Lista de todas las categorías disponibles
+  categories: string[];
 }
 
 const CategoryFilter = ({ categories }: CategoryFilterProps) => {
@@ -29,18 +29,26 @@ const CategoryFilter = ({ categories }: CategoryFilterProps) => {
     } else {
       params.delete('category');
     }
-    params.set('page', '1'); // Resetear página
-    router.push(`${pathname}?${params.toString()}`);
+    params.set('page', '1');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false }); // { scroll: false } para UX
   };
 
   return (
     <div className="w-full md:w-auto">
-      <label htmlFor="category" className="sr-only">Filtrar por categoría</label>
+      <label htmlFor="category-filter" className="sr-only">Filtrar por categoría</label> {/* Cambiado id */}
       <select
-        id="category"
+        id="category-filter" // Asegúrate que el id sea único y coincida con htmlFor
         value={selectedCategory}
         onChange={handleCategoryChange}
-        className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-blue sm:text-sm bg-white"
+        // Clases de estilo con tu paleta:
+        // Borde: Gris medio
+        // Texto: Gris oscuro azulado
+        // Fondo: Blanco
+        // Focus: Anillo azul oscuro principal y borde azul oscuro principal
+        className="block w-full px-4 py-2 border border-[#718096] rounded-md shadow-sm 
+                   text-[#2D3748] bg-white 
+                   focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F] 
+                   sm:text-sm transition-colors duration-150"
       >
         <option value="">Todas las Categorías</option>
         {categories.map((cat) => (
