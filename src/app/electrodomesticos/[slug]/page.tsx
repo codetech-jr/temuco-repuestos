@@ -1,138 +1,170 @@
-// src/app/electrodomesticos/[slug]/page.tsx
-import { electrodomesticosData, Electrodomestico } from '@/app/data/electrodomesticos';
+// src/app/repuestos/[slug]/page.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import WhatsAppButton from '@/components/ui/WhatsAppButton';
+import WhatsAppButton from '@/components/ui/WhatsAppButton'; // Asumo que lo reutilizas
 import type { Metadata, ResolvingMetadata } from 'next';
 
-interface ElectrodomesticoDetailPageProps {
+// 1. REUTILIZA O DEFINE TU INTERFAZ Repuesto
+export interface Repuesto {
+  id: string;
+  slug: string;
+  name: string;
+  short_description?: string;
+  price: number;
+  original_price?: number;
+  image_url: string;
+  category: string;
+  brand: string;
+  is_original?: boolean;
+  long_description?: string;
+  features?: string[];
+  specifications?: { key: string; value: string }[];
+  images?: string[];
+  stock?: number;
+  is_active?: boolean;
+  created_at?: string;
+}
+
+interface RepuestoDetailPageProps {
   params: { slug: string };
 }
 
+// 2. FUNCIÓN PARA HACER FETCH A LA API POR SLUG
+async function getRepuestoBySlugFromAPI(slug: string): Promise<Repuesto | null> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const fetchUrl = `${API_BASE_URL}/repuestos/slug/${slug}`; // CAMBIO: endpoint de repuestos
+  console.log("FRONTEND (detalle repuesto por slug): Intentando fetch a:", fetchUrl);
+
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' });
+    if (res.status === 404) return null;
+    if (!res.ok) {
+      console.error(`Error al cargar repuesto por slug (${slug}): ${res.status} ${res.statusText}`);
+      throw new Error(`Falló la carga del repuesto con slug ${slug}`);
+    }
+    return await res.json() as Repuesto;
+  } catch (error) {
+    console.error(`Excepción al cargar repuesto por slug (${slug}):`, error);
+    throw error;
+  }
+}
+
+// 3. METADATA DINÁMICA
 export async function generateMetadata(
-  { params }: ElectrodomesticoDetailPageProps,
+  { params }: RepuestoDetailPageProps,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const electrodomestico = electrodomesticosData.find(p => p.slug === params.slug);
-  if (!electrodomestico) {
-    return {
-      title: 'Electrodoméstico no encontrado - Temuco Repuestos', // Incluir nombre de la tienda
-    }
+  const repuesto = await getRepuestoBySlugFromAPI(params.slug);
+  if (!repuesto) {
+    return { title: 'Repuesto no encontrado - Temuco Repuestos' };
   }
   return {
-    title: `${electrodomestico.name} - Electrodomésticos Temuco Repuestos`, // Título más específico
-    description: electrodomestico.shortDescription || `Descubre detalles y características del ${electrodomestico.name}.`,
-    // openGraph: {
-    //   title: electrodomestico.name,
-    //   description: electrodomestico.shortDescription,
-    //   images: [electrodomestico.imageUrl, ...(electrodomestico.images || [])],
-    // },
+    title: `${repuesto.name} - Repuestos Temuco Repuestos`,
+    description: repuesto.short_description || `Detalles del repuesto ${repuesto.name}.`,
+  };
+}
+
+// 4. GENERACIÓN DE PARÁMETROS ESTÁTICOS (opcional)
+export async function generateStaticParams() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  try {
+    const res = await fetch(`${API_BASE_URL}/repuestos`); // CAMBIO: endpoint de repuestos
+    if (!res.ok) return [];
+    const todosLosRepuestos: Repuesto[] = await res.json();
+    return todosLosRepuestos.map((item) => ({ slug: item.slug }));
+  } catch (error) {
+    console.error("Error en generateStaticParams para repuestos:", error);
+    return [];
   }
 }
 
-export async function generateStaticParams() {
-  return electrodomesticosData.map((item) => ({
-    slug: item.slug,
-  }));
-}
+// 5. COMPONENTE DE PÁGINA
+export default async function RepuestoDetailPage({ params }: RepuestoDetailPageProps) {
+  const repuesto = await getRepuestoBySlugFromAPI(params.slug);
 
-export default function ElectrodomesticoDetailPage({ params }: ElectrodomesticoDetailPageProps) {
-  const electrodomestico = electrodomesticosData.find(p => p.slug === params.slug);
-
-  if (!electrodomestico) {
+  if (!repuesto) {
     notFound();
   }
 
+  const displayImage = (repuesto.images && repuesto.images.length > 0)
+                       ? repuesto.images[0]
+                       : repuesto.image_url;
+
   return (
-    // Contenedor principal con fondo claro
     <div className="bg-[#F7FAFC] py-8 md:py-12">
       <div className="container mx-auto px-4">
+        {/* Aquí va el JSX para mostrar los detalles del repuesto */}
+        {/* Similar a la página de detalle de electrodomésticos, pero con los campos de Repuesto */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
-          {/* Columna de Imágenes */}
-          {/* Eliminado aspect-w-x aspect-h-y, usar aspect-square o similar si es necesario */}
           <div className="aspect-square relative rounded-lg overflow-hidden shadow-lg bg-white">
-            {(electrodomestico.images && electrodomestico.images.length > 0) ? (
-                <Image src={electrodomestico.images[0]} alt={electrodomestico.name} fill objectFit="contain" className="p-2 sm:p-4 md:p-6"/>
-            ) : (
-                <Image src={electrodomestico.imageUrl} alt={electrodomestico.name} fill objectFit="contain" className="p-2 sm:p-4 md:p-6"/>
-            )}
+            <Image
+              src={displayImage || '/placeholder.png'}
+              alt={repuesto.name}
+              fill
+              style={{ objectFit: "contain" }}
+              className="p-2 sm:p-4 md:p-6"
+              priority
+            />
           </div>
-
-          {/* Columna de Detalles */}
           <div>
-            {/* Título del producto: Azul oscuro principal */}
             <h1 className="text-3xl md:text-4xl font-bold text-[#002A7F] mb-2">
-              {electrodomestico.name}
+              {repuesto.name}
             </h1>
-            {/* Marca: Gris medio */}
-            {electrodomestico.brand && (
+            {repuesto.brand && (
               <p className="text-sm text-[#718096] mb-3">
-                Marca: <span className="font-medium text-[#2D3748]">{electrodomestico.brand}</span>
+                Marca: <span className="font-medium text-[#2D3748]">{repuesto.brand}</span>
               </p>
             )}
-
-            {/* Precio: Rojo. Precio original: Gris medio */}
+            {repuesto.is_original !== undefined && ( // Mostrar si es original o no
+                <p className="text-sm text-[#718096] mb-3">
+                    Tipo: <span className="font-medium text-[#2D3748]">{repuesto.is_original ? "Original" : "Alternativo"}</span>
+                </p>
+            )}
             <p className="text-2xl md:text-3xl font-bold text-[#C8102E] mb-6">
-              {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.price)}
-              {electrodomestico.originalPrice && (
+              {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(repuesto.price)}
+              {repuesto.original_price && (
                 <span className="ml-3 text-base line-through text-[#718096]">
-                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.originalPrice)}
+                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(repuesto.original_price)}
                 </span>
               )}
             </p>
-
-            {/* Descripción larga: Texto gris oscuro azulado. Encabezados y strong en azul */}
-            {electrodomestico.longDescription && (
-              <div className="prose prose-sm sm:prose-base max-w-none text-[#2D3748] mb-6
-                              prose-headings:text-[#002A7F] prose-strong:text-[#002A7F]"
-                   dangerouslySetInnerHTML={{ __html: electrodomestico.longDescription.replace(/\n/g, '<br />') }} />
+            {repuesto.long_description && (
+              <div className="prose prose-sm sm:prose-base max-w-none text-[#2D3748] mb-6 ..."
+                   dangerouslySetInnerHTML={{ __html: repuesto.long_description.replace(/\n/g, '<br />') }} />
             )}
-
-            {/* Características */}
-            {electrodomestico.features && electrodomestico.features.length > 0 && (
+             {repuesto.features && repuesto.features.length > 0 && (
               <div className="mb-6">
-                {/* Título de sección: Azul oscuro principal */}
-                <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Características Destacadas:</h3>
-                {/* Texto de lista: Gris oscuro azulado */}
+                <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Características:</h3>
                 <ul className="list-disc list-inside space-y-1 text-[#2D3748]">
-                  {electrodomestico.features.map((feature, index) => (
+                  {repuesto.features.map((feature, index) => (
                     <li key={index}>{feature}</li>
                   ))}
                 </ul>
               </div>
             )}
-
-            {/* Especificaciones */}
-            {electrodomestico.specifications && electrodomestico.specifications.length > 0 && (
+            {repuesto.specifications && repuesto.specifications.length > 0 && (
               <div className="mb-6">
-                {/* Título de sección: Azul oscuro principal */}
                 <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Especificaciones:</h3>
-                {/* Texto de lista: Gris oscuro azulado. Key de especificación en azul */}
-                <ul className="space-y-2 text-[#2D3748]">
-                  {electrodomestico.specifications.map((spec, index) => (
-                    <li key={index} className="flex flex-col sm:flex-row sm:items-baseline">
-                      <strong className="w-full sm:w-1/3 md:w-1/4 flex-shrink-0 font-medium text-[#002A7F] mb-0.5 sm:mb-0">{spec.key}:</strong>
+                 <ul className="space-y-2 text-[#2D3748]">
+                  {repuesto.specifications.map((spec, index) => (
+                    <li key={index} className="flex ...">
+                      <strong className="...">{spec.key}:</strong>
                       <span>{spec.value}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-
-            {/* WhatsAppButton: Estilizado internamente */}
             <div className="mt-8 mb-6">
               <WhatsAppButton
-                phoneNumber="569XXXXXXXX" // Reemplaza con tu número
-                productName={electrodomestico.name}
-                buttonText="Consultar por este Electrodoméstico"
-                // className="w-full sm:w-auto bg-[#002A7F] hover:bg-[#002266] text-white ..."
+                phoneNumber="569XXXXXXXX"
+                productName={repuesto.name}
+                buttonText="Consultar por este Repuesto"
               />
             </div>
-
-            {/* Enlace "Volver": Texto azul oscuro principal, hover azul muy oscuro */}
-            <Link href="/electrodomesticos" className="inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">
-              ← Volver al catálogo de electrodomésticos
+            <Link href="/repuestos" className="inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">
+              ← Volver al catálogo de repuestos
             </Link>
           </div>
         </div>
