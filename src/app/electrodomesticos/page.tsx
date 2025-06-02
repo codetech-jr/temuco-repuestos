@@ -1,6 +1,6 @@
 // src/app/electrodomesticos/page.tsx
 import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard'; // Asegúrate que ProductCard espera los props correctos
+import ProductCard from '@/components/ui/ProductCard';
 import type { Metadata } from 'next';
 
 import SearchBar from '@/components/catalog/SearchBar';
@@ -9,8 +9,7 @@ import BrandFilter from '@/components/catalog/BrandFilter';
 import SortDropdown from '@/components/catalog/SortDropdown';
 import PaginationControls from '@/components/catalog/PaginationControls';
 
-// Interfaz que coincide con los datos de la API (y lo que ProductCard necesita)
-// Ajusta 'altText' y 'tag' según tu ProductCard y si vienen de la API
+// 1. Interfaz Electrodomestico
 export interface Electrodomestico {
   id: string;
   slug: string;
@@ -18,7 +17,7 @@ export interface Electrodomestico {
   short_description?: string;
   price: number;
   original_price?: number;
-  image_url: string;        // Campo de la API
+  image_url: string;
   category: string;
   brand: string;
   rating?: number;
@@ -30,9 +29,8 @@ export interface Electrodomestico {
   stock?: number;
   is_active?: boolean;
   created_at?: string;
-  // Campos adicionales que ProductCard podría esperar (si no vienen de la API, necesitarás gestionarlos)
-  altText?: string;
-  tag?: string;
+  altText?: string; // Opcional, para ProductCard
+  tag?: string;     // Opcional, para ProductCard
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -52,97 +50,79 @@ interface ElectrodomesticosPageProps {
   };
 }
 
-async function fetchAllElectrodomesticosFromAPI(): Promise<Electrodomestico[]> {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  try {
-    const res = await fetch(`${API_BASE_URL}/electrodomesticos`, {
-      cache: 'no-store', // Para desarrollo. Considera estrategias de caché para producción.
-    });
-    if (!res.ok) {
-      console.error("Error al cargar TODOS los electrodomésticos desde la API:", res.status, res.statusText);
-      return [];
-    }
-    return await res.json();
-  } catch (error) {
-    console.error("Excepción al cargar TODOS los electrodomésticos:", error);
-    return [];
-  }
-}
-
-
-async function getProcessedElectrodomesticos(
-  allElectrodomesticos: Electrodomestico[],
+// 2. Función de fetch que AHORA pasa los searchParams a la API
+async function fetchPaginatedAndFilteredElectrodomesticos(
   searchParams: ElectrodomesticosPageProps['searchParams']
 ): Promise<{ electrodomesticos: Electrodomestico[], totalPages: number, currentPage: number, totalItems: number }> {
-  let itemsToFilter = [...allElectrodomesticos];
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  
+  const query = new URLSearchParams();
+  if (searchParams.q) query.append('q', searchParams.q);
+  if (searchParams.category) query.append('category', searchParams.category);
+  if (searchParams.brand) query.append('brand', searchParams.brand);
+  if (searchParams.sort) query.append('sort', searchParams.sort);
+  if (searchParams.page) query.append('page', searchParams.page);
+  query.append('limit', ITEMS_PER_PAGE.toString()); // Siempre envía el límite
 
-  // Aplicar filtros (q, category, brand)
-  if (searchParams.q) {
-    const searchTerm = searchParams.q.toLowerCase();
-    itemsToFilter = itemsToFilter.filter(item =>
-      item.name.toLowerCase().includes(searchTerm) ||
-      (item.short_description && item.short_description.toLowerCase().includes(searchTerm)) ||
-      (item.brand && item.brand.toLowerCase().includes(searchTerm))
-    );
-  }
-  if (searchParams.category) {
-    itemsToFilter = itemsToFilter.filter(item =>
-      item.category && item.category.toLowerCase() === searchParams.category?.toLowerCase()
-    );
-  }
-  if (searchParams.brand) {
-    itemsToFilter = itemsToFilter.filter(item =>
-      item.brand && item.brand.toLowerCase() === searchParams.brand?.toLowerCase()
-    );
-  }
+  const fetchUrl = `${API_BASE_URL}/electrodomesticos?${query.toString()}`;
+  console.log("FRONTEND (lista electro): Intentando fetch a:", fetchUrl);
 
-  // Aplicar ordenación
-  if (searchParams.sort) {
-    const [sortBy, sortOrder] = searchParams.sort.split('_') as [keyof Electrodomestico, 'asc' | 'desc'];
-    itemsToFilter.sort((a, b) => {
-      let valA = a[sortBy] as any;
-      let valB = b[sortBy] as any;
-      if (sortBy === 'price') {
-        valA = Number(valA);
-        valB = Number(valB);
-      } else if (typeof valA === 'string' && typeof valB === 'string') {
-        valA = valA.toLowerCase();
-        valB = valB.toLowerCase();
-      }
-      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
-      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error("FRONTEND (lista electro): Error al cargar electrodomésticos:", res.status, res.statusText, "URL:", fetchUrl);
+      return { electrodomesticos: [], totalPages: 0, currentPage: 1, totalItems: 0 };
+    }
+    const responseData = await res.json();
+    // Asumimos que la API devuelve: { data: [], totalItems: N, totalPages: M, currentPage: X }
+    return {
+      electrodomesticos: responseData.data || [],
+      totalItems: responseData.totalItems || 0,
+      totalPages: responseData.totalPages || 0,
+      currentPage: responseData.currentPage || 1,
+    };
+  } catch (error) {
+    console.error("FRONTEND (lista electro): Excepción al cargar electrodomésticos:", error, "URL:", fetchUrl);
+    return { electrodomesticos: [], totalPages: 0, currentPage: 1, totalItems: 0 };
   }
-
-  // Paginación
-  const totalItems = itemsToFilter.length;
-  const page = searchParams.page ? parseInt(searchParams.page, 10) : 1;
-  const currentPage = Math.max(1, Math.min(page, Math.ceil(totalItems / ITEMS_PER_PAGE) || 1));
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedElectrodomesticos = itemsToFilter.slice(startIndex, endIndex);
-
-  return { electrodomesticos: paginatedElectrodomesticos, totalPages, currentPage, totalItems };
 }
 
-// Funciones para obtener categorías y marcas únicas de la lista completa
+// 3. Funciones para obtener categorías y marcas únicas (Idealmente de endpoints dedicados en el futuro)
+// Esta función ahora DEBERÍA OBTENER TODOS LOS PRODUCTOS para extraer valores únicos,
+// lo cual no es ideal si tienes muchos. Por ahora, la dejamos así, pero ten en cuenta la optimización.
+async function fetchAllItemsForFilterValues(): Promise<Electrodomestico[]> {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+    // Fetch todos los items o un límite alto. Para una app real, esto debería ser un endpoint dedicado.
+    const fetchUrl = `${API_BASE_URL}/electrodomesticos?limit=1000`; // Trae hasta 1000 para extraer (no ideal)
+     try {
+        const res = await fetch(fetchUrl, { cache: 'no-store' }); // O una caché más larga para estos valores
+        if(!res.ok) {
+            console.error("Error fetching all items for filter values:", res.statusText);
+            return [];
+        }
+        // Asumiendo que la API con paginación devuelve { data: [...] }
+        const responseData = await res.json();
+        return responseData.data || [];
+    } catch (error) {
+        console.error(`Error fetching all items for filter values:`, error);
+        return [];
+    }
+}
+
 const getUniqueValues = (items: Electrodomestico[], key: keyof Electrodomestico): string[] => {
-    return Array.from(new Set(items.map(item => item[key]).filter(Boolean) as string[])).sort();
+    return Array.from(new Set(items.map(item => item[key] as string).filter(Boolean))).sort();
 };
 
 
+// 4. Componente de Página Principal
 export default async function ElectrodomesticosPage({ searchParams }: ElectrodomesticosPageProps) {
-  // 1. Obtener TODOS los electrodomésticos de la API una vez
-  const allApiElectrodomesticos = await fetchAllElectrodomesticosFromAPI();
+  // Llama a la función de fetch que pasa los searchParams a la API
+  const { electrodomesticos, totalPages, currentPage, totalItems } = await fetchPaginatedAndFilteredElectrodomesticos(searchParams);
 
-  // 2. Procesar (filtrar, ordenar, paginar) los datos obtenidos
-  const { electrodomesticos, totalPages, currentPage, totalItems } = await getProcessedElectrodomesticos(allApiElectrodomesticos, searchParams);
-
-  // 3. Obtener categorías y marcas únicas de la lista completa de la API
-  const allCategories = getUniqueValues(allApiElectrodomesticos, 'category');
-  const allBrands = getUniqueValues(allApiElectrodomesticos, 'brand');
+  // Obtiene valores para filtros (considera optimizar esto en el futuro)
+  const allApiElectrodomesticosForFilters = await fetchAllItemsForFilterValues();
+  const allCategories = getUniqueValues(allApiElectrodomesticosForFilters, 'category');
+  const allBrands = getUniqueValues(allApiElectrodomesticosForFilters, 'brand');
 
   return (
     <div className="bg-[#F7FAFC] min-h-screen">
@@ -166,6 +146,7 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
         {totalItems > 0 && (
           <p className="mb-6 text-sm text-[#718096]">
             Mostrando {electrodomesticos.length} de {totalItems} electrodomésticos.
+            (Página {currentPage} de {totalPages})
           </p>
         )}
 
@@ -177,13 +158,13 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
                 product={{
                   id: item.id,
                   name: item.name,
-                  imageUrl: item.image_url, // Usar image_url de la API
-                  altText: item.altText || item.name, // altText puede ser el nombre si no viene de la API
+                  imageUrl: item.image_url,
+                  altText: item.altText || item.name,
                   rating: item.rating || 0,
-                  reviewCount: item.review_count || 0, // Usar review_count
+                  reviewCount: item.review_count || 0,
                   price: item.price,
-                  originalPrice: item.original_price, // Usar original_price
-                  tag: item.tag, // Si 'tag' no viene de la API, ProductCard debe manejarlo o quitarlo
+                  originalPrice: item.original_price,
+                  tag: item.tag,
                   link: `/electrodomesticos/${item.slug}`,
                 }}
               />
@@ -199,12 +180,13 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
             </Link>
           </div>
         )}
-
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          // itemsPerPage={ITEMS_PER_PAGE} // Ya no es necesario pasar esto si se maneja en getProcessedElectrodomesticos
-        />
+        
+        {totalPages > 1 && (
+            <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            />
+        )}
       </div>
     </div>
   );
