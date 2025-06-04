@@ -9,7 +9,7 @@ import BrandFilter from '@/components/catalog/BrandFilter';
 import SortDropdown from '@/components/catalog/SortDropdown';
 import PaginationControls from '@/components/catalog/PaginationControls';
 
-// 1. Interfaz Electrodomestico
+// 1. Interfaz Electrodomestico (debe coincidir con tu API)
 export interface Electrodomestico {
   id: string;
   slug: string;
@@ -29,8 +29,8 @@ export interface Electrodomestico {
   stock?: number;
   is_active?: boolean;
   created_at?: string;
-  altText?: string; // Opcional, para ProductCard
-  tag?: string;     // Opcional, para ProductCard
+  altText?: string;
+  tag?: string;
 }
 
 const ITEMS_PER_PAGE = 8;
@@ -50,7 +50,7 @@ interface ElectrodomesticosPageProps {
   };
 }
 
-// 2. Función de fetch que AHORA pasa los searchParams a la API
+// 2. Función de fetch que pasa los searchParams a la API (SIN CAMBIOS RESPECTO A LA ÚLTIMA VERSIÓN)
 async function fetchPaginatedAndFilteredElectrodomesticos(
   searchParams: ElectrodomesticosPageProps['searchParams']
 ): Promise<{ electrodomesticos: Electrodomestico[], totalPages: number, currentPage: number, totalItems: number }> {
@@ -62,7 +62,7 @@ async function fetchPaginatedAndFilteredElectrodomesticos(
   if (searchParams.brand) query.append('brand', searchParams.brand);
   if (searchParams.sort) query.append('sort', searchParams.sort);
   if (searchParams.page) query.append('page', searchParams.page);
-  query.append('limit', ITEMS_PER_PAGE.toString()); // Siempre envía el límite
+  query.append('limit', ITEMS_PER_PAGE.toString());
 
   const fetchUrl = `${API_BASE_URL}/electrodomesticos?${query.toString()}`;
   console.log("FRONTEND (lista electro): Intentando fetch a:", fetchUrl);
@@ -74,7 +74,6 @@ async function fetchPaginatedAndFilteredElectrodomesticos(
       return { electrodomesticos: [], totalPages: 0, currentPage: 1, totalItems: 0 };
     }
     const responseData = await res.json();
-    // Asumimos que la API devuelve: { data: [], totalItems: N, totalPages: M, currentPage: X }
     return {
       electrodomesticos: responseData.data || [],
       totalItems: responseData.totalItems || 0,
@@ -87,42 +86,53 @@ async function fetchPaginatedAndFilteredElectrodomesticos(
   }
 }
 
-// 3. Funciones para obtener categorías y marcas únicas (Idealmente de endpoints dedicados en el futuro)
-// Esta función ahora DEBERÍA OBTENER TODOS LOS PRODUCTOS para extraer valores únicos,
-// lo cual no es ideal si tienes muchos. Por ahora, la dejamos así, pero ten en cuenta la optimización.
-async function fetchAllItemsForFilterValues(): Promise<Electrodomestico[]> {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-    // Fetch todos los items o un límite alto. Para una app real, esto debería ser un endpoint dedicado.
-    const fetchUrl = `${API_BASE_URL}/electrodomesticos?limit=1000`; // Trae hasta 1000 para extraer (no ideal)
-     try {
-        const res = await fetch(fetchUrl, { cache: 'no-store' }); // O una caché más larga para estos valores
-        if(!res.ok) {
-            console.error("Error fetching all items for filter values:", res.statusText);
-            return [];
-        }
-        // Asumiendo que la API con paginación devuelve { data: [...] }
-        const responseData = await res.json();
-        return responseData.data || [];
-    } catch (error) {
-        console.error(`Error fetching all items for filter values:`, error);
-        return [];
+// 3. NUEVAS FUNCIONES para obtener valores de filtro desde endpoints dedicados
+async function fetchElectrodomesticoCategories(): Promise<string[]> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  // CAMBIO: Usar la nueva ruta del backend
+  const fetchUrl = `${API_BASE_URL}/electrodomesticos/config/categories`; 
+  console.log("FRONTEND (filtros): Intentando fetch a categorías:", fetchUrl);
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' }); // Considera 'force-cache' o revalidación para estos datos
+    if (!res.ok) {
+      console.error("Error fetching electrodomestico categories:", res.statusText, "URL:", fetchUrl);
+      return [];
     }
+    return await res.json(); // API devuelve directamente el array de strings
+  } catch (error) {
+    console.error("Excepción fetching electrodomestico categories:", error, "URL:", fetchUrl);
+    return [];
+  }
 }
 
-const getUniqueValues = (items: Electrodomestico[], key: keyof Electrodomestico): string[] => {
-    return Array.from(new Set(items.map(item => item[key] as string).filter(Boolean))).sort();
-};
-
+async function fetchElectrodomesticoBrands(): Promise<string[]> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  // CAMBIO: Usar la nueva ruta del backend
+  const fetchUrl = `${API_BASE_URL}/electrodomesticos/config/brands`; 
+  console.log("FRONTEND (filtros): Intentando fetch a marcas:", fetchUrl);
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error("Error fetching electrodomestico brands:", res.statusText, "URL:", fetchUrl);
+      return [];
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("Excepción fetching electrodomestico brands:", error, "URL:", fetchUrl);
+    return [];
+  }
+}
 
 // 4. Componente de Página Principal
 export default async function ElectrodomesticosPage({ searchParams }: ElectrodomesticosPageProps) {
   // Llama a la función de fetch que pasa los searchParams a la API
   const { electrodomesticos, totalPages, currentPage, totalItems } = await fetchPaginatedAndFilteredElectrodomesticos(searchParams);
 
-  // Obtiene valores para filtros (considera optimizar esto en el futuro)
-  const allApiElectrodomesticosForFilters = await fetchAllItemsForFilterValues();
-  const allCategories = getUniqueValues(allApiElectrodomesticosForFilters, 'category');
-  const allBrands = getUniqueValues(allApiElectrodomesticosForFilters, 'brand');
+  // Obtiene valores para los filtros llamando a los nuevos endpoints en paralelo
+  const [allCategories, allBrands] = await Promise.all([
+    fetchElectrodomesticoCategories(),
+    fetchElectrodomesticoBrands()
+  ]);
 
   return (
     <div className="bg-[#F7FAFC] min-h-screen">
@@ -136,6 +146,7 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
           </p>
         </header>
 
+        {/* La sección de filtros ahora usa los datos de los nuevos fetches */}
         <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 md:p-6 bg-white rounded-lg shadow-md">
           <SearchBar placeholder="Buscar electrodomésticos..." />
           <CategoryFilter categories={allCategories} />

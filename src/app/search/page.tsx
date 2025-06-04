@@ -1,169 +1,159 @@
-// app/search/page.tsx
-"use client";
+// src/app/search/page.tsx
+"use client"; // Necesario para useSearchParams
 
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import ProductCard from '@/components/ui/ProductCard'; // Asumimos que quieres usar ProductCard
 
-// Interfaces (podrías moverlas a un archivo types.ts si las usas en más sitios)
-interface NavLinkItem {
-  href: string;
-  label: string;
+// Define tus interfaces (puedes importarlas si las tienes centralizadas)
+export interface Electrodomestico {
+  id: string; slug: string; name: string; price: number; image_url: string;
+  category: string; brand: string; short_description?: string;
+  // Campos que ProductCard podría esperar
+  altText?: string; original_price?: number; rating?: number; review_count?: number; tag?: string;
 }
 
-interface ServicioItem {
-  slug: string;
-  title: string;
-  // Asumimos que serviciosDetalleData tiene al menos estas propiedades
-  // Añade otras propiedades si las usas para mostrar más detalles
+export interface Repuesto {
+  id: string; slug: string; name: string; price: number; image_url: string;
+  category: string; brand: string; short_description?: string; is_original?: boolean;
+  // Campos que ProductCard podría esperar
+  altText?: string; original_price?: number; tag?: string;
 }
 
-// --- DATOS DE EJEMPLO (Idealmente importados de archivos de datos) ---
-// Copiados/adaptados de tu Header.tsx para este ejemplo
-const repuestosData: NavLinkItem[] = [
-  { href: "/repuestos?category=Compresores", label: "Compresores" },
-  { href: "/repuestos?category=Termostatos", label: "Termostatos" },
-  { href: "/repuestos?category=Filtros", label: "Filtros Secadores" },
-  { href: "/repuestos?category=Capacitores", label: "Capacitores" },
-  { href: "/repuestos?tipo=originales", label: "Repuestos Originales de Fábrica" },
-  // Podrías añadir más repuestos individuales aquí si quisieras que aparezcan en la búsqueda
-  // Ejemplo: { href: "/repuestos/compresor-modelo-xyz", label: "Compresor Modelo XYZ" }
-];
-
-const electrodomesticosData: NavLinkItem[] = [
-  { href: "/electrodomesticos?category=Refrigeradores", label: "Refrigeradores" },
-  { href: "/electrodomesticos?category=Lavadoras", label: "Lavadoras" },
-  { href: "/electrodomesticos?category=Secadoras", label: "Secadoras" },
-  { href: "/electrodomesticos?category=Cocinas", label: "Cocinas y Encimeras" },
-  { href: "/electrodomesticos?category=Aires Acondicionados", label: "Aires Acondicionados Split" },
-  { href: "/electrodomesticos?category=Hornos", label: "Hornos Eléctricos y Microondas" },
-  // Ejemplo: { href: "/electrodomesticos/lavadora-super-eco", label: "Lavadora Súper Eco Carga Frontal" }
-];
-
-// Asumimos que puedes importar serviciosDetalleData
-// Si no, tendrías que definirlo aquí también o adaptar
-import { serviciosDetalleData } from '@/app/data/servicios'; // Asegúrate que esta ruta sea correcta
-
+interface SearchResults {
+  electrodomesticos: Electrodomestico[];
+  repuestos: Repuesto[];
+  searchTerm: string;
+}
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
 
-  const [filteredRepuestos, setFilteredRepuestos] = useState<NavLinkItem[]>([]);
-  const [filteredElectrodomesticos, setFilteredElectrodomesticos] = useState<NavLinkItem[]>([]);
-  const [filteredServicios, setFilteredServicios] = useState<ServicioItem[]>([]);
+  const [results, setResults] = useState<SearchResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (query) {
-      const lowerCaseQuery = query.toLowerCase();
+      const fetchResults = async () => {
+        setLoading(true);
+        setError(null);
+        setResults(null); // Limpiar resultados previos
 
-      // Filtrar Repuestos
-      const repuestosResult = repuestosData.filter(item =>
-        item.label.toLowerCase().includes(lowerCaseQuery)
-      );
-      setFilteredRepuestos(repuestosResult);
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+        const fetchUrl = `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`;
+        console.log("SEARCH PAGE: Intentando fetch a:", fetchUrl);
 
-      // Filtrar Electrodomésticos
-      const electrodomesticosResult = electrodomesticosData.filter(item =>
-        item.label.toLowerCase().includes(lowerCaseQuery)
-      );
-      setFilteredElectrodomesticos(electrodomesticosResult);
+        try {
+          const response = await fetch(fetchUrl, { cache: 'no-store' });
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.message || `Error al buscar: ${response.statusText}`);
+          }
+          const data: SearchResults = await response.json();
+          setResults(data);
+        } catch (err: any) {
+          console.error("Error en fetch de búsqueda:", err);
+          setError(err.message || 'Ocurrió un error al realizar la búsqueda.');
+        } finally {
+          setLoading(false);
+        }
+      };
 
-      // Filtrar Servicios
-      // serviciosDetalleData es tu array importado
-      const serviciosResult = serviciosDetalleData.filter((item: ServicioItem) =>
-        item.title.toLowerCase().includes(lowerCaseQuery)
-      );
-      setFilteredServicios(serviciosResult);
-
+      fetchResults();
     } else {
-      // Si no hay query, limpiar resultados
-      setFilteredRepuestos([]);
-      setFilteredElectrodomesticos([]);
-      setFilteredServicios([]);
+      // Si no hay query, no hay nada que buscar.
+      setLoading(false);
+      setResults({ electrodomesticos: [], repuestos: [], searchTerm: '' });
     }
-  }, [query]); // Este efecto se ejecuta cada vez que 'query' cambia
+  }, [query]); // Se ejecuta cada vez que 'query' cambia
 
-  const noResults =
-    query &&
-    filteredRepuestos.length === 0 &&
-    filteredElectrodomesticos.length === 0 &&
-    filteredServicios.length === 0;
+  if (loading) {
+    return <div className="container mx-auto px-4 py-8 text-center">Cargando resultados...</div>;
+  }
+
+  if (error) {
+    return <div className="container mx-auto px-4 py-8 text-center text-red-600">Error: {error}</div>;
+  }
+
+  const noResultsFound = results && results.electrodomesticos.length === 0 && results.repuestos.length === 0;
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Resultados de Búsqueda</h1>
-
       {query ? (
-        <>
-          <p className="mb-8 text-lg">
-            Resultados para: <strong className="text-[#002A7F]">{query}</strong>
-          </p>
-
-          {filteredRepuestos.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-3 text-gray-700">Repuestos Encontrados</h2>
-              <ul className="list-disc pl-5 space-y-1">
-                {filteredRepuestos.map((item, index) => (
-                  <li key={`repuesto-${index}`}>
-                    <Link href={item.href} className="text-blue-600 hover:text-blue-800 hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {filteredElectrodomesticos.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-3 text-gray-700">Electrodomésticos Encontrados</h2>
-              <ul className="list-disc pl-5 space-y-1">
-                {filteredElectrodomesticos.map((item, index) => (
-                  <li key={`electro-${index}`}>
-                    <Link href={item.href} className="text-blue-600 hover:text-blue-800 hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {filteredServicios.length > 0 && (
-            <section className="mb-8">
-              <h2 className="text-2xl font-semibold mb-3 text-gray-700">Servicios Encontrados</h2>
-              <ul className="list-disc pl-5 space-y-1">
-                {filteredServicios.map((item, index) => (
-                  <li key={`servicio-${index}`}>
-                    <Link href={`/servicios/${item.slug}`} className="text-blue-600 hover:text-blue-800 hover:underline">
-                      {item.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {noResults && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md">
-              <p className="text-yellow-700">
-                No se encontraron resultados para "<strong>{query}</strong>". Intenta con otros términos.
-              </p>
-            </div>
-          )}
-        </>
+        <h1 className="text-3xl font-bold mb-8">
+          Resultados de Búsqueda para: <span className="text-[#002A7F]">{results?.searchTerm || query}</span>
+        </h1>
       ) : (
-        <p className="text-lg text-gray-600">
-          Por favor, ingresa un término en la barra de búsqueda.
-        </p>
+        <h1 className="text-3xl font-bold mb-8">Página de Búsqueda</h1>
+      )}
+      
+
+      {!query && (
+        <p className="text-lg text-gray-600">Por favor, usa la barra de búsqueda en el encabezado para encontrar productos o repuestos.</p>
       )}
 
-      <div className="mt-12">
-        <Link href="/" className="text-[#002A7F] hover:underline font-medium">
-          ← Volver al Inicio
-        </Link>
-      </div>
+      {query && noResultsFound && !loading && (
+        <p className="text-lg text-gray-600">No se encontraron resultados para tu búsqueda.</p>
+      )}
+
+      {results && results.electrodomesticos.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Electrodomésticos Encontrados</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {results.electrodomesticos.map((item) => (
+              <ProductCard
+                key={`electro-${item.id}`}
+                product={{
+                  id: item.id,
+                  name: item.name,
+                  imageUrl: item.image_url,
+                  altText: item.altText || item.name,
+                  price: item.price,
+                  originalPrice: item.original_price,
+                  link: `/electrodomesticos/${item.slug}`, // Enlace a la página de detalle
+                  // rating: item.rating,
+                  // reviewCount: item.review_count,
+                  // tag: item.tag,
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {results && results.repuestos.length > 0 && (
+        <section className="mb-12">
+          <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Repuestos Encontrados</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {results.repuestos.map((item) => (
+              <ProductCard // O un RepuestoCard si lo tienes
+                key={`repuesto-${item.id}`}
+                product={{
+                  id: item.id,
+                  name: item.name,
+                  imageUrl: item.image_url,
+                  altText: item.altText || item.name,
+                  price: item.price,
+                  originalPrice: item.original_price,
+                  link: `/repuestos/${item.slug}`, // Enlace a la página de detalle
+                  tag: item.is_original ? "Original" : (item.is_original === false ? "Alternativo" : undefined), // Ejemplo de tag para repuesto
+                }}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {query && (
+        <div className="mt-12 text-center">
+          <Link href="/" className="text-[#002A7F] hover:underline font-medium">
+            ← Volver al Inicio
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 // src/app/repuestos/page.tsx
 import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard'; // O RepuestoCard si lo tienes
+import ProductCard from '@/components/ui/ProductCard'; // O RepuestoCard si es diferente
 import type { Metadata } from 'next';
 
 import SearchBar from '@/components/catalog/SearchBar';
@@ -9,7 +9,7 @@ import BrandFilter from '@/components/catalog/BrandFilter';
 import SortDropdown from '@/components/catalog/SortDropdown';
 import PaginationControls from '@/components/catalog/PaginationControls';
 
-// 1. Interfaz Repuesto (asegúrate que coincida con tu API)
+// 1. Interfaz Repuesto (debe coincidir con tu API)
 export interface Repuesto {
   id: string;
   slug: string;
@@ -28,15 +28,15 @@ export interface Repuesto {
   stock?: number;
   is_active?: boolean;
   created_at?: string;
-  altText?: string;
-  tag?: string;
+  altText?: string; // Opcional, para ProductCard
+  tag?: string;     // Opcional, para ProductCard
 }
 
 const ITEMS_PER_PAGE = 8; // O el valor que prefieras
 
 export const metadata: Metadata = {
   title: 'Catálogo de Repuestos - Temuco Repuestos',
-  description: 'Encuentra todos los repuestos para tus electrodomésticos.',
+  description: 'Encuentra todos los repuestos para tus electrodomésticos: compresores, termostatos, filtros y más.',
 };
 
 interface RepuestosPageProps {
@@ -46,6 +46,8 @@ interface RepuestosPageProps {
     brand?: string;
     sort?: string;
     page?: string;
+    // Podrías añadir is_original como filtro si lo deseas
+    // is_original?: 'true' | 'false'; 
   };
 }
 
@@ -61,9 +63,10 @@ async function fetchPaginatedAndFilteredRepuestos(
   if (searchParams.brand) query.append('brand', searchParams.brand);
   if (searchParams.sort) query.append('sort', searchParams.sort);
   if (searchParams.page) query.append('page', searchParams.page);
+  // if (searchParams.is_original) query.append('is_original', searchParams.is_original); // Si implementas filtro por original
   query.append('limit', ITEMS_PER_PAGE.toString());
 
-  const fetchUrl = `${API_BASE_URL}/repuestos?${query.toString()}`; // CAMBIO: endpoint /repuestos
+  const fetchUrl = `${API_BASE_URL}/repuestos?${query.toString()}`;
   console.log("FRONTEND (lista repuestos): Intentando fetch a:", fetchUrl);
 
   try {
@@ -86,34 +89,48 @@ async function fetchPaginatedAndFilteredRepuestos(
 }
 
 // 3. Funciones para obtener categorías y marcas únicas de REPUESTOS
-async function fetchAllItemsForRepuestoFilterValues(): Promise<Repuesto[]> {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-    const fetchUrl = `${API_BASE_URL}/repuestos?limit=1000`; // CAMBIO: endpoint /repuestos
-     try {
-        const res = await fetch(fetchUrl, { cache: 'no-store' });
-        if(!res.ok) {
-            console.error("Error fetching all repuestos for filter values:", res.statusText);
-            return [];
-        }
-        const responseData = await res.json();
-        return responseData.data || [];
-    } catch (error) {
-        console.error(`Error fetching all repuestos for filter values:`, error);
-        return [];
+async function fetchRepuestoCategories(): Promise<string[]> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const fetchUrl = `${API_BASE_URL}/repuestos/config/categories`; 
+  console.log("FRONTEND (filtros repuestos): Intentando fetch a categorías:", fetchUrl);
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error("Error fetching repuesto categories:", res.statusText, "URL:", fetchUrl);
+      return [];
     }
+    return await res.json();
+  } catch (error) {
+    console.error("Excepción fetching repuesto categories:", error, "URL:", fetchUrl);
+    return [];
+  }
 }
 
-const getUniqueValues = (items: Repuesto[], key: keyof Repuesto): string[] => {
-    return Array.from(new Set(items.map(item => item[key] as string).filter(Boolean))).sort();
-};
+async function fetchRepuestoBrands(): Promise<string[]> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const fetchUrl = `${API_BASE_URL}/repuestos/config/brands`;
+  console.log("FRONTEND (filtros repuestos): Intentando fetch a marcas:", fetchUrl);
+  try {
+    const res = await fetch(fetchUrl, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error("Error fetching repuesto brands:", res.statusText, "URL:", fetchUrl);
+      return [];
+    }
+    return await res.json();
+  } catch (error) {
+    console.error("Excepción fetching repuesto brands:", error, "URL:", fetchUrl);
+    return [];
+  }
+}
 
 // 4. Componente de Página Principal para Repuestos
 export default async function RepuestosPage({ searchParams }: RepuestosPageProps) {
   const { repuestos, totalPages, currentPage, totalItems } = await fetchPaginatedAndFilteredRepuestos(searchParams);
 
-  const allApiRepuestosForFilters = await fetchAllItemsForRepuestoFilterValues();
-  const allCategories = getUniqueValues(allApiRepuestosForFilters, 'category');
-  const allBrands = getUniqueValues(allApiRepuestosForFilters, 'brand');
+  const [allCategories, allBrands] = await Promise.all([
+    fetchRepuestoCategories(),
+    fetchRepuestoBrands()
+  ]);
 
   return (
     <div className="bg-[#F7FAFC] min-h-screen">
@@ -128,10 +145,12 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
         </header>
 
         <div className="mb-8 md:mb-12 flex flex-col md:flex-row flex-wrap gap-4 md:gap-6 items-center md:justify-between p-4 md:p-6 bg-white rounded-lg shadow-md">
-          <SearchBar placeholder="Buscar repuestos..." /> {/* Placeholder actualizado */}
+          <SearchBar placeholder="Buscar repuestos..." />
           <CategoryFilter categories={allCategories} />
           <BrandFilter brands={allBrands} />
-          <SortDropdown /> {/* Asegúrate que las opciones de SortDropdown sean relevantes para repuestos */}
+          {/* Podrías tener un SortDropdown con opciones específicas para repuestos */}
+          <SortDropdown /> 
+          {/* Podrías añadir un filtro para is_original si es relevante */}
         </div>
 
         {totalItems > 0 && (
@@ -153,11 +172,11 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
                   altText: item.altText || item.name,
                   price: item.price,
                   originalPrice: item.original_price,
-                  link: `/repuestos/${item.slug}`, // Enlace correcto a detalle de repuesto
-                  // Quita o adapta props que no apliquen a repuestos (ej. rating, review_count si no los tienes)
-                  // rating: item.rating || 0,
-                  // reviewCount: item.review_count || 0,
-                  // tag: item.tag,
+                  link: `/repuestos/${item.slug}`,
+                  // Campos opcionales para ProductCard:
+                  // rating: item.rating, // Si los repuestos tienen rating
+                  // reviewCount: item.review_count, // Si los repuestos tienen reviews
+                  // tag: item.is_original ? "Original" : "Alternativo", // Ejemplo de tag
                 }}
               />
             ))}
