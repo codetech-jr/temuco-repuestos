@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { PulseLoader } from "react-spinners";
 
-// Interfaz para los datos del formulario
+// Interfaces
 export interface ElectrodomesticoFormData {
   slug: string;
   name: string;
@@ -28,32 +28,27 @@ export interface ElectrodomesticoFormData {
   created_at?: string;
 }
 
-// Interfaz para los items de especificaciones
 type SpecificationItem = { key: string; value: string };
 
-// Esquema Zod para validación del lado del cliente con preprocess mejorado
+interface ElectrodomesticoFormProps {
+  initialData?: Partial<ElectrodomesticoFormData>;
+  onSubmit: (data: any) => Promise<boolean>;
+  isEditing?: boolean;
+}
+
+// Schema
 const formSchema = z.object({
   name: z.string().min(3, "El nombre es muy corto"),
   slug: z.string().min(3, "El slug es muy corto").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug inválido (solo letras minúsculas, números y guiones)"),
   price: z.preprocess(
-    (val) => {
-      const sVal = String(val).trim();
-      if (sVal === "") return undefined;
-      const num = parseFloat(sVal);
-      return isNaN(num) ? val : num;
-    },
+    (val) => parseNumberInput(val),
     z.number({ required_error: "El precio es requerido", invalid_type_error: "El precio debe ser un número" })
      .positive("El precio debe ser positivo")
   ),
   category: z.string().min(1, "La categoría es requerida"),
   brand: z.string().min(1, "La marca es requerida"),
   stock: z.preprocess(
-    (val) => {
-      const sVal = String(val).trim();
-      if (sVal === "" || val === null || val === undefined) return undefined;
-      const num = parseInt(sVal, 10);
-      return isNaN(num) ? undefined : num;
-    },
+    (val) => parseNumberInput(val, true),
     z.number({ invalid_type_error: "El stock debe ser un número entero" })
      .int("El stock debe ser un entero")
      .min(0, "El stock no puede ser negativo")
@@ -61,12 +56,7 @@ const formSchema = z.object({
   ),
   short_description: z.string().optional(),
   original_price: z.preprocess(
-    (val) => {
-      const sVal = String(val).trim();
-      if (sVal === "" || val === null || val === undefined) return undefined;
-      const num = parseFloat(sVal);
-      return isNaN(num) ? undefined : num;
-    },
+    (val) => parseNumberInput(val),
     z.number({ invalid_type_error: "El precio original debe ser un número" })
      .positive("El precio original debe ser positivo")
      .optional()
@@ -77,24 +67,14 @@ const formSchema = z.object({
   images: z.array(z.string().min(1, "La URL de imagen no puede estar vacía")).optional().default([]),
   is_active: z.boolean(),
   rating: z.preprocess(
-    (val) => {
-      const sVal = String(val).trim();
-      if (sVal === "" || val === null || val === undefined) return undefined;
-      const num = parseFloat(sVal);
-      return isNaN(num) ? undefined : num;
-    },
+    (val) => parseNumberInput(val),
     z.number({ invalid_type_error: "Rating debe ser un número" })
      .min(0, "Rating no puede ser negativo")
      .max(5, "Rating no puede ser mayor a 5")
      .optional()
   ),
   review_count: z.preprocess(
-    (val) => {
-      const sVal = String(val).trim();
-      if (sVal === "" || val === null || val === undefined) return undefined;
-      const num = parseInt(sVal, 10);
-      return isNaN(num) ? undefined : num;
-    },
+    (val) => parseNumberInput(val, true),
     z.number({ invalid_type_error: "El conteo de reseñas debe ser un número entero" })
      .int("El conteo de reseñas debe ser un entero")
      .min(0, "El conteo de reseñas no puede ser negativo")
@@ -102,13 +82,28 @@ const formSchema = z.object({
   ),
 });
 
-interface ElectrodomesticoFormProps {
-  initialData?: Partial<ElectrodomesticoFormData>;
-  onSubmit: (data: any) => Promise<boolean>;
-  isEditing?: boolean;
-}
+// Helper functions
+const parseNumberInput = (val: unknown, isInteger = false): number | undefined => {
+  const sVal = String(val).trim();
+  if (sVal === "" || val === null || val === undefined) return undefined;
+  const num = isInteger ? parseInt(sVal, 10) : parseFloat(sVal);
+  return isNaN(num) ? undefined : num;
+};
+
+const formatInitialFeatures = (features: string[] | string | undefined): string => {
+  if (Array.isArray(features)) return features.join(', ');
+  if (typeof features === 'string') return features;
+  return '';
+};
+
+const formatInitialImages = (images: string[] | string | undefined): string => {
+  if (Array.isArray(images)) return images.join(', ');
+  if (typeof images === 'string') return images;
+  return '';
+};
 
 export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing = false }: ElectrodomesticoFormProps) {
+  // State
   const [formData, setFormData] = useState<ElectrodomesticoFormData>({
     name: '', slug: '', price: '', category: '', brand: '', stock: '',
     short_description: '', original_price: '', image_url: '',
@@ -121,9 +116,10 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
+  // Effects
   useEffect(() => {
     if (initialData) {
-      const formReadyData: ElectrodomesticoFormData = {
+      setFormData({
         name: initialData.name || '',
         slug: initialData.slug || '',
         price: initialData.price !== undefined ? String(initialData.price) : '',
@@ -133,30 +129,41 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
         short_description: initialData.short_description || '',
         original_price: initialData.original_price !== undefined ? String(initialData.original_price) : '',
         image_url: initialData.image_url || '',
-        features: Array.isArray(initialData.features) ? initialData.features.join(', ') : (initialData.features || ''),
+        features: formatInitialFeatures(initialData.features),
         specifications: typeof initialData.specifications === 'object' && initialData.specifications !== null
-                        ? JSON.stringify(initialData.specifications, null, 2)
-                        : (initialData.specifications || ''),
-        images: Array.isArray(initialData.images) ? initialData.images.join(', ') : (initialData.images || ''),
+                      ? JSON.stringify(initialData.specifications, null, 2)
+                      : (initialData.specifications || ''),
+        images: formatInitialImages(initialData.images),
         is_active: initialData.is_active === undefined ? true : initialData.is_active,
         rating: initialData.rating !== undefined ? String(initialData.rating) : '',
         review_count: initialData.review_count !== undefined ? String(initialData.review_count) : '',
         id: initialData.id,
         created_at: initialData.created_at,
-      };
-      setFormData(formReadyData);
+      });
     }
   }, [initialData]);
 
+  // Handlers
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    if (type === 'checkbox') {
-      setFormData(prev => ({ ...prev, [name]: (e.target as HTMLInputElement).checked }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    
+    setFormData(prev => ({ ...prev, [name]: newValue }));
+    
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const generateSlugFromName = () => {
+    if (formData.name && (!isEditing || !formData.slug)) {
+      const generated = formData.name
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, '-')
+        .replace(/[^\w-]+/g, '')
+        .substring(0, 100);
+      setFormData(prev => ({ ...prev, slug: generated }));
     }
   };
 
@@ -164,7 +171,7 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
     e.preventDefault();
     setErrors({});
     
-    // Preprocesar features e images para convertirlos a array si son strings
+    // Preprocess form data
     const processedFormData = {
       ...formData,
       features: typeof formData.features === 'string' 
@@ -175,18 +182,16 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
         : formData.images || []
     };
 
-    console.log("ElectrodomesticoForm: formData ANTES de validar:", processedFormData);
+    // Validate with Zod
     const validationResult = formSchema.safeParse(processedFormData);
-
     if (!validationResult.success) {
-      console.error("Errores de validación Zod (frontend):", validationResult.error.flatten().fieldErrors);
       setErrors(validationResult.error.flatten().fieldErrors);
-      setIsSubmitting(false);
       return;
     }
 
     setIsSubmitting(true);
     
+    // Prepare data for submission
     const dataFromZod = validationResult.data;
     const dataToSubmit = {
       slug: dataFromZod.slug,
@@ -199,67 +204,53 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
       brand: dataFromZod.brand,
       rating: dataFromZod.rating,
       review_count: dataFromZod.review_count,
-      long_description: (formData.long_description?.trim() === '' ? undefined : formData.long_description),
-      features: dataFromZod.features, // Ya es un array
-      images: dataFromZod.images,    // Ya es un array
+      long_description: formData.long_description?.trim() || undefined,
+      features: dataFromZod.features,
+      images: dataFromZod.images,
       specifications: [] as SpecificationItem[],
       stock: dataFromZod.stock,
       is_active: dataFromZod.is_active,
     };
 
+    // Process specifications if present
     if (formData.specifications && typeof formData.specifications === 'string' && formData.specifications.trim() !== '') {
-        try {
-            const parsedSpecs = JSON.parse(formData.specifications);
-            if (
-                Array.isArray(parsedSpecs) &&
-                parsedSpecs.every(s => 
-                    typeof s === 'object' && s !== null && 
-                    'key' in s && typeof s.key === 'string' &&
-                    'value' in s && typeof s.value === 'string'
-                )
-            ) {
-                dataToSubmit.specifications = parsedSpecs as SpecificationItem[];
-            } else {
-                setErrors(prev => ({...prev, specifications: ["El formato debe ser un array de objetos: [{key: 'nombre', value: 'valor'}]"]}));
-                setIsSubmitting(false);
-                return;
-            }
-        } catch (jsonErr: any) {
-            console.error("Error parseando JSON de especificaciones:", jsonErr);
-            setErrors(prev => ({...prev, specifications: ["JSON inválido para especificaciones. Revise la sintaxis."]}));
-            setIsSubmitting(false);
-            return;
+      try {
+        const parsedSpecs = JSON.parse(formData.specifications);
+        if (Array.isArray(parsedSpecs) && parsedSpecs.every(isValidSpecification)) {
+          dataToSubmit.specifications = parsedSpecs as SpecificationItem[];
+        } else {
+          setErrors(prev => ({...prev, specifications: ["El formato debe ser un array de objetos: [{key: 'nombre', value: 'valor'}]"]}));
+          setIsSubmitting(false);
+          return;
         }
-    }
-
-    console.log("ElectrodomesticoForm: dataToSubmit (para la API):", dataToSubmit);
-    try {
-        const success = await onSubmit(dataToSubmit);
-        if (success) {
-            router.push('/admin/electrodomesticos');
-            router.refresh();
-        }
-    } catch (apiError: any) {
-        console.error("ElectrodomesticoForm: EXCEPCIÓN al llamar a la prop onSubmit:", apiError);
-    } finally {
+      } catch (error) {
+        setErrors(prev => ({...prev, specifications: ["JSON inválido para especificaciones. Revise la sintaxis."]}));
         setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Submit data
+    try {
+      const success = await onSubmit(dataToSubmit);
+      if (success) {
+        router.push('/admin/electrodomesticos');
+        router.refresh();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const generateSlugFromName = () => {
-    if (formData.name && (!isEditing || !formData.slug) ) {
-        const generated = formData.name
-            .toLowerCase()
-            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-            .replace(/\s+/g, '-')
-            .replace(/[^\w-]+/g, '')
-            .substring(0, 100);
-        setFormData(prev => ({ ...prev, slug: generated }));
-    }
+  const isValidSpecification = (s: any): boolean => {
+    return typeof s === 'object' && s !== null && 
+           'key' in s && typeof s.key === 'string' &&
+           'value' in s && typeof s.value === 'string';
   };
 
+  // Render
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 md:p-8 rounded-lg shadow-md">
+ <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 md:p-8 rounded-lg shadow-md">
       {/* Nombre */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre del Producto <span className="text-red-500">*</span></label>
@@ -338,23 +329,7 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
         <p className="mt-1 text-xs text-gray-500">Ej: /images/productos/mi-producto.jpg</p>
       </div>
-
-      {/* Rating */}
-      <div>
-        <label htmlFor="rating" className="block text-sm font-medium text-gray-700 mb-1">Rating (0-5, opcional)</label>
-        <input type="number" name="rating" id="rating" value={formData.rating || ''} onChange={handleChange} min="0" max="5" step="0.1"
-               className={`mt-1 block w-full px-3 py-2 border ${errors.rating ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`} />
-        {errors.rating && <p className="mt-1 text-xs text-red-500">{errors.rating.join(', ')}</p>}
-      </div>
-
-      {/* Review Count */}
-      <div>
-        <label htmlFor="review_count" className="block text-sm font-medium text-gray-700 mb-1">Conteo de Reseñas (opcional)</label>
-        <input type="number" name="review_count" id="review_count" value={formData.review_count || ''} onChange={handleChange} min="0" step="1"
-               className={`mt-1 block w-full px-3 py-2 border ${errors.review_count ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm`} />
-        {errors.review_count && <p className="mt-1 text-xs text-red-500">{errors.review_count.join(', ')}</p>}
-      </div>
-
+      
       {/* Features (como string separado por comas) */}
       <div>
         <label htmlFor="features" className="block text-sm font-medium text-gray-700 mb-1">Características (separadas por comas, opcional)</label>

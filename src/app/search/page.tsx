@@ -1,36 +1,38 @@
 // src/app/search/page.tsx
-"use client"; // Necesario para useSearchParams
+"use client"; 
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard'; // Asumimos que quieres usar ProductCard
+import ProductCard from '@/components/ui/ProductCard';
 
-// Define tus interfaces (puedes importarlas si las tienes centralizadas)
+// Interfaces de tus productos
 export interface Electrodomestico {
   id: string; slug: string; name: string; price: number; image_url: string;
   category: string; brand: string; short_description?: string;
-  // Campos que ProductCard podría esperar
-  altText?: string; original_price?: number; rating?: number; review_count?: number; tag?: string;
+  altText?: string; original_price?: number;
 }
 
 export interface Repuesto {
   id: string; slug: string; name: string; price: number; image_url: string;
   category: string; brand: string; short_description?: string; is_original?: boolean;
-  // Campos que ProductCard podría esperar
-  altText?: string; original_price?: number; tag?: string;
+  altText?: string; original_price?: number;
 }
 
+// --- INTERFAZ ACTUALIZADA ---
+// Ahora esperamos también un campo 'suggestion' que puede ser string o null.
 interface SearchResults {
   electrodomesticos: Electrodomestico[];
   repuestos: Repuesto[];
   searchTerm: string;
+  suggestion: string | null; // <-- CAMBIO CLAVE
 }
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q');
 
+  // El estado ahora usa la nueva interfaz
   const [results, setResults] = useState<SearchResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export default function SearchPage() {
       const fetchResults = async () => {
         setLoading(true);
         setError(null);
-        setResults(null); // Limpiar resultados previos
+        setResults(null);
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
         const fetchUrl = `${API_BASE_URL}/search?q=${encodeURIComponent(query)}`;
@@ -61,14 +63,12 @@ export default function SearchPage() {
           setLoading(false);
         }
       };
-
       fetchResults();
     } else {
-      // Si no hay query, no hay nada que buscar.
       setLoading(false);
-      setResults({ electrodomesticos: [], repuestos: [], searchTerm: '' });
+      setResults({ electrodomesticos: [], repuestos: [], searchTerm: '', suggestion: null });
     }
-  }, [query]); // Se ejecuta cada vez que 'query' cambia
+  }, [query]);
 
   if (loading) {
     return <div className="container mx-auto px-4 py-8 text-center">Cargando resultados...</div>;
@@ -90,13 +90,29 @@ export default function SearchPage() {
         <h1 className="text-3xl font-bold mb-8">Página de Búsqueda</h1>
       )}
       
-
       {!query && (
-        <p className="text-lg text-gray-600">Por favor, usa la barra de búsqueda en el encabezado para encontrar productos o repuestos.</p>
+        <p className="text-lg text-gray-600">Usa la barra de búsqueda para encontrar productos o repuestos.</p>
       )}
 
+      {/* --- BLOQUE DE RESULTADOS ACTUALIZADO --- */}
       {query && noResultsFound && !loading && (
-        <p className="text-lg text-gray-600">No se encontraron resultados para tu búsqueda.</p>
+        <div className="text-center py-10 bg-gray-50 rounded-lg">
+          <p className="text-xl text-gray-500 mb-4">No se encontraron resultados para tu búsqueda.</p>
+          
+          {/* Mostramos la sugerencia si existe */}
+          {results?.suggestion && (
+            <p className="text-lg text-gray-700">
+              Quizás quisiste decir:{" "}
+              <Link 
+                href={`/search?q=${encodeURIComponent(results.suggestion)}`}
+                className="font-semibold text-[#002A7F] hover:underline"
+              >
+                {results.suggestion}
+              </Link>
+              ?
+            </p>
+          )}
+        </div>
       )}
 
       {results && results.electrodomesticos.length > 0 && (
@@ -113,11 +129,10 @@ export default function SearchPage() {
                   altText: item.altText || item.name,
                   price: item.price,
                   originalPrice: item.original_price,
-                  link: `/electrodomesticos/${item.slug}`, // Enlace a la página de detalle
-                  // rating: item.rating,
-                  // reviewCount: item.review_count,
-                  // tag: item.tag,
+                  link: `/electrodomesticos/${item.slug}`,
                 }}
+                // Pasamos el tipo correcto para que el wishlist funcione
+                productType="electrodomestico"
               />
             ))}
           </div>
@@ -129,7 +144,7 @@ export default function SearchPage() {
           <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Repuestos Encontrados</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {results.repuestos.map((item) => (
-              <ProductCard // O un RepuestoCard si lo tienes
+              <ProductCard
                 key={`repuesto-${item.id}`}
                 product={{
                   id: item.id,
@@ -138,9 +153,11 @@ export default function SearchPage() {
                   altText: item.altText || item.name,
                   price: item.price,
                   originalPrice: item.original_price,
-                  link: `/repuestos/${item.slug}`, // Enlace a la página de detalle
-                  tag: item.is_original ? "Original" : (item.is_original === false ? "Alternativo" : undefined), // Ejemplo de tag para repuesto
+                  link: `/repuestos/${item.slug}`,
+                  tag: item.is_original ? "Original" : (item.is_original === false ? "Alternativo" : undefined),
                 }}
+                // Pasamos el tipo correcto para que el wishlist funcione
+                productType="repuesto"
               />
             ))}
           </div>

@@ -1,16 +1,20 @@
 // src/components/ui/ProductCard.tsx
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
-import RatingStars from './RatingStars'; // Asegúrate que la ruta sea correcta
+import RatingStars from './RatingStars';
+import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import apiClient from '@/app/api/axiosClient';
 
 export interface Product {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl?: string;
   altText: string;
-  tag?: 'Oferta' | 'Nuevo' | 'Más Vendido'; // Ampliando opciones de tags
-  rating: number;
-  reviewCount: number;
+  tag?: 'Oferta' | 'Nuevo' | 'Más Vendido';
+  rating?: number;
+  reviewCount?: number;
   price: number;
   originalPrice?: number;
   link: string;
@@ -18,84 +22,108 @@ export interface Product {
 
 interface ProductCardProps {
   product: Product;
+  productType: 'electrodomestico' | 'repuesto';
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
-  const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount);
+const PLACEHOLDER_IMAGE_URL = '/images/placeholder-product.png';
+
+const ProductCard = ({ product, productType }: ProductCardProps) => {
+  const handleProductClick = () => {
+    apiClient.post('/tracking/click', {
+      productId: product.id,
+      productType: productType,
+    }).catch(error => {
+      console.warn('Click tracking failed:', error.message);
+    });
   };
 
-  let tagBgColor = '';
-  let tagTextColor = 'text-[#F7FAFC]'; // Casi blanco azulado por defecto para tags
+  const formatPrice = (amount: number) => {
+    return new Intl.NumberFormat('es-CL', { 
+      style: 'currency', 
+      currency: 'CLP', 
+      minimumFractionDigits: 0 
+    }).format(amount);
+  };
 
-  // Definir colores para diferentes tags
-  if (product.tag === 'Oferta') {
-    tagBgColor = 'bg-[#C8102E]'; // Rojo
-  } else if (product.tag === 'Nuevo') {
-    tagBgColor = 'bg-[#002A7F]'; // Azul oscuro principal
-  } else if (product.tag === 'Más Vendido') {
-    tagBgColor = 'bg-[#DD6B20]'; // Naranja/Marrón (asegúrate que este hex sea correcto y esté en tu paleta)
-    // Podrías necesitar ajustar tagTextColor para el naranja si #F7FAFC no contrasta bien, ej: text-black
-  }
-
+  const tagBgColor = product.tag === 'Oferta' ? 'bg-[#C8102E]' : 
+                    product.tag === 'Nuevo' ? 'bg-[#002A7F]' : 
+                    product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' : '';
+  const tagTextColor = 'text-[#F7FAFC]';
+  const imageToDisplay = product.imageUrl || PLACEHOLDER_IMAGE_URL;
+  const altTextToDisplay = product.altText || product.name || 'Imagen de producto';
 
   return (
-    // Fondo de tarjeta: Blanco. Sombra y efecto hover.
-    <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-1">
-      <Link href={product.link} className="block group">
-        <div className="w-full h-52 sm:h-56 md:h-60 relative overflow-hidden">
+    <div 
+      className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full 
+                 transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-1
+                 w-full max-w-xs sm:max-w-sm mx-auto relative cursor-pointer"
+      onClick={handleProductClick}
+    >
+      <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
+        <WishlistButton
+          productId={product.id}
+          productType={productType}
+        />
+      </div>
+
+      <Link href={product.link} className="block group flex-grow flex flex-col">
+        <div className="w-full h-48 sm:h-52 md:h-56 relative overflow-hidden bg-gray-200">
           <Image
-            src={product.imageUrl}
-            alt={product.altText}
-            fill // Usar fill en lugar de layout="fill"
+            src={imageToDisplay}
+            alt={altTextToDisplay}
+            fill
             objectFit="cover"
             className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" // Ayuda a Next/Image
+            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            priority={false}
           />
           {product.tag && tagBgColor && (
             <span
-              className={`absolute top-3 left-3 px-3 py-1 text-xs font-bold tracking-wide rounded-full shadow-md ${tagBgColor} ${tagTextColor}`}
+              className={`absolute top-2 left-2 px-2.5 py-0.5 text-xs font-bold tracking-wide rounded-full shadow-md ${tagBgColor} ${tagTextColor}`}
             >
               {product.tag.toUpperCase()}
             </span>
           )}
         </div>
-      </Link>
-
-      {/* Contenido de la tarjeta */}
-      <div className="p-4 flex flex-col flex-grow">
-        {/* Nombre del producto: Gris oscuro azulado, hover azul oscuro principal */}
-        <h3 className="text-md sm:text-lg font-semibold text-[#2D3748] mb-1 leading-tight min-h-[3em] sm:min-h-[2.5em] md:min-h-[3em]">
-          <Link href={product.link} className="hover:text-[#002A7F] transition-colors">
+      
+        <div className="p-3 sm:p-4 flex flex-col flex-grow">
+          <h3 
+            className="text-sm sm:text-base font-semibold text-[#2D3748] mb-1 leading-tight 
+                       min-h-[2.8em] sm:min-h-[2.6em] line-clamp-2"
+            title={product.name}
+          >
             {product.name}
-          </Link>
-        </h3>
+          </h3>
 
-        <div className="flex items-center mb-2">
-          {/* RatingStars se estiliza internamente. Podría usar text-[#DD6B20] o text-[#002A7F] para estrellas llenas */}
-          <RatingStars rating={product.rating} starSize="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-          {/* Conteo de reseñas: Gris medio */}
-          <span className="ml-2 text-xs sm:text-sm text-[#718096]">({product.reviewCount})</span>
+          <div className="mb-2 h-[22px] flex items-center">
+            {typeof product.rating === 'number' && product.rating > 0 && (
+              <>
+                <RatingStars rating={product.rating} starSize="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                {typeof product.reviewCount === 'number' && (
+                  <span className="ml-1.5 text-[11px] sm:text-xs text-[#718096]">({product.reviewCount})</span>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="mb-3">
+            <span className="text-lg sm:text-xl font-bold text-[#002A7F]">{formatPrice(product.price)}</span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="ml-2 text-xs line-through text-[#718096]">
+                {formatPrice(product.originalPrice)}
+              </span>
+            )}
+          </div>
+
+          <div className="mt-auto pt-2">
+            <div className="w-full bg-[#C8102E] hover:bg-[#002266] text-[#F7FAFC] 
+                          font-semibold py-2 px-3 rounded text-center transition duration-300 
+                          text-xs sm:text-sm">
+              Ver Detalles
+            </div>
+          </div>
         </div>
-
-        <div className="mb-4">
-          {/* Precio actual: Azul oscuro principal (o rojo #C8102E si quieres más énfasis) */}
-          <span className="text-xl sm:text-2xl font-bold text-[#002A7F]">{formatPrice(product.price)}</span>
-          {product.originalPrice && (
-            // Precio original: Gris medio
-            <span className="ml-2 text-xs sm:text-sm line-through text-[#718096]">
-              {formatPrice(product.originalPrice)}
-            </span>
-          )}
-        </div>
-
-        {/* Botón "Ver Detalles": Rojo, hover azul muy oscuro, texto casi blanco azulado */}
-        <Link href={product.link} legacyBehavior>
-          <a className="mt-auto w-full bg-[#C8102E] hover:bg-[#002266] text-[#F7FAFC] font-semibold py-2.5 px-4 rounded text-center transition duration-300 text-sm sm:text-base">
-            Ver Detalles
-          </a>
-        </Link>
-      </div>
+      </Link>
     </div>
   );
 };

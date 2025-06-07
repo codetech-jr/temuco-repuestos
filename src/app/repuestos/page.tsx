@@ -1,6 +1,7 @@
 // src/app/repuestos/page.tsx
+import { Suspense } from 'react';
 import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard'; // O RepuestoCard si es diferente
+import ProductCard from '@/components/ui/ProductCard';
 import type { Metadata } from 'next';
 
 import SearchBar from '@/components/catalog/SearchBar';
@@ -8,8 +9,8 @@ import CategoryFilter from '@/components/catalog/CategoryFilter';
 import BrandFilter from '@/components/catalog/BrandFilter';
 import SortDropdown from '@/components/catalog/SortDropdown';
 import PaginationControls from '@/components/catalog/PaginationControls';
+import ProductCardSkeleton from '@/components/ui/ProductCardSkeleton';
 
-// 1. Interfaz Repuesto (debe coincidir con tu API)
 export interface Repuesto {
   id: string;
   slug: string;
@@ -28,11 +29,11 @@ export interface Repuesto {
   stock?: number;
   is_active?: boolean;
   created_at?: string;
-  altText?: string; // Opcional, para ProductCard
-  tag?: string;     // Opcional, para ProductCard
+  altText?: string;
+  tag?: string;
 }
 
-const ITEMS_PER_PAGE = 8; // O el valor que prefieras
+const ITEMS_PER_PAGE = 8;
 
 export const metadata: Metadata = {
   title: 'Catálogo de Repuestos - Temuco Repuestos',
@@ -46,12 +47,9 @@ interface RepuestosPageProps {
     brand?: string;
     sort?: string;
     page?: string;
-    // Podrías añadir is_original como filtro si lo deseas
-    // is_original?: 'true' | 'false'; 
   };
 }
 
-// 2. Función de fetch que pasa los searchParams a la API de REPUESTOS
 async function fetchPaginatedAndFilteredRepuestos(
   searchParams: RepuestosPageProps['searchParams']
 ): Promise<{ repuestos: Repuesto[], totalPages: number, currentPage: number, totalItems: number }> {
@@ -63,7 +61,6 @@ async function fetchPaginatedAndFilteredRepuestos(
   if (searchParams.brand) query.append('brand', searchParams.brand);
   if (searchParams.sort) query.append('sort', searchParams.sort);
   if (searchParams.page) query.append('page', searchParams.page);
-  // if (searchParams.is_original) query.append('is_original', searchParams.is_original); // Si implementas filtro por original
   query.append('limit', ITEMS_PER_PAGE.toString());
 
   const fetchUrl = `${API_BASE_URL}/repuestos?${query.toString()}`;
@@ -88,17 +85,12 @@ async function fetchPaginatedAndFilteredRepuestos(
   }
 }
 
-// 3. Funciones para obtener categorías y marcas únicas de REPUESTOS
 async function fetchRepuestoCategories(): Promise<string[]> {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  const fetchUrl = `${API_BASE_URL}/repuestos/config/categories`; 
-  console.log("FRONTEND (filtros repuestos): Intentando fetch a categorías:", fetchUrl);
+  const fetchUrl = `${API_BASE_URL}/repuestos/config/categories`;
   try {
     const res = await fetch(fetchUrl, { cache: 'no-store' });
-    if (!res.ok) {
-      console.error("Error fetching repuesto categories:", res.statusText, "URL:", fetchUrl);
-      return [];
-    }
+    if (!res.ok) return [];
     return await res.json();
   } catch (error) {
     console.error("Excepción fetching repuesto categories:", error, "URL:", fetchUrl);
@@ -109,13 +101,9 @@ async function fetchRepuestoCategories(): Promise<string[]> {
 async function fetchRepuestoBrands(): Promise<string[]> {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
   const fetchUrl = `${API_BASE_URL}/repuestos/config/brands`;
-  console.log("FRONTEND (filtros repuestos): Intentando fetch a marcas:", fetchUrl);
   try {
     const res = await fetch(fetchUrl, { cache: 'no-store' });
-    if (!res.ok) {
-      console.error("Error fetching repuesto brands:", res.statusText, "URL:", fetchUrl);
-      return [];
-    }
+    if (!res.ok) return [];
     return await res.json();
   } catch (error) {
     console.error("Excepción fetching repuesto brands:", error, "URL:", fetchUrl);
@@ -123,10 +111,62 @@ async function fetchRepuestoBrands(): Promise<string[]> {
   }
 }
 
-// 4. Componente de Página Principal para Repuestos
-export default async function RepuestosPage({ searchParams }: RepuestosPageProps) {
+function RepuestoListSkeleton({ count = ITEMS_PER_PAGE }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+      {Array.from({ length: count }).map((_, index) => (
+        <ProductCardSkeleton key={`skel-${index}`} />
+      ))}
+    </div>
+  );
+}
+
+async function RepuestoList({ searchParams }: RepuestosPageProps) {
   const { repuestos, totalPages, currentPage, totalItems } = await fetchPaginatedAndFilteredRepuestos(searchParams);
 
+  return (
+    <>
+      {totalItems > 0 && (
+        <p className="mb-6 text-sm text-[#718096]">
+          Mostrando {repuestos.length} de {totalItems} repuestos.
+          (Página {currentPage} de {totalPages})
+        </p>
+      )}
+      {repuestos.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+          {repuestos.map((item) => (
+            <ProductCard
+              key={item.id}
+              product={{
+                id: item.id,
+                name: item.name,
+                imageUrl: item.image_url,
+                altText: item.altText || item.name,
+                price: item.price,
+                originalPrice: item.original_price,
+                link: `/repuestos/${item.slug}`,
+                tag: item.is_original !== undefined ? (item.is_original ? "Original" : "Alternativo") : undefined,
+              }}
+              productType="repuesto"
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-xl text-[#718096]">No se encontraron repuestos.</p>
+          <Link href="/repuestos" className="mt-4 inline-block text-[#002A7F] hover:text-[#002266] hover:underline">
+            Limpiar filtros
+          </Link>
+        </div>
+      )}
+      {totalPages > 1 && (
+        <PaginationControls currentPage={currentPage} totalPages={totalPages} />
+      )}
+    </>
+  );
+}
+
+export default async function RepuestosPage({ searchParams }: RepuestosPageProps) {
   const [allCategories, allBrands] = await Promise.all([
     fetchRepuestoCategories(),
     fetchRepuestoBrands()
@@ -148,56 +188,13 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
           <SearchBar placeholder="Buscar repuestos..." />
           <CategoryFilter categories={allCategories} />
           <BrandFilter brands={allBrands} />
-          {/* Podrías tener un SortDropdown con opciones específicas para repuestos */}
-          <SortDropdown /> 
-          {/* Podrías añadir un filtro para is_original si es relevante */}
+          <SortDropdown />
         </div>
-
-        {totalItems > 0 && (
-          <p className="mb-6 text-sm text-[#718096]">
-            Mostrando {repuestos.length} de {totalItems} repuestos.
-            (Página {currentPage} de {totalPages})
-          </p>
-        )}
-
-        {repuestos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-            {repuestos.map((item) => (
-              <ProductCard // O RepuestoCard
-                key={item.id}
-                product={{
-                  id: item.id,
-                  name: item.name,
-                  imageUrl: item.image_url,
-                  altText: item.altText || item.name,
-                  price: item.price,
-                  originalPrice: item.original_price,
-                  link: `/repuestos/${item.slug}`,
-                  // Campos opcionales para ProductCard:
-                  // rating: item.rating, // Si los repuestos tienen rating
-                  // reviewCount: item.review_count, // Si los repuestos tienen reviews
-                  // tag: item.is_original ? "Original" : "Alternativo", // Ejemplo de tag
-                }}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-xl text-[#718096]">
-              No se encontraron repuestos que coincidan con tu búsqueda o filtros.
-            </p>
-            <Link href="/repuestos" className="mt-4 inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">
-              Limpiar búsqueda y filtros
-            </Link>
-          </div>
-        )}
         
-        {totalPages > 1 && (
-            <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            />
-        )}
+        <Suspense fallback={<RepuestoListSkeleton />}>
+          {/* @ts-expect-error Server Component */}
+          <RepuestoList searchParams={searchParams} />
+        </Suspense>
       </div>
     </div>
   );

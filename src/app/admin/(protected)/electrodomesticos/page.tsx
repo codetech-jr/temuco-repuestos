@@ -116,7 +116,7 @@ const AdminElectrodomesticosPage = () => {
           href="/admin/electrodomesticos/nuevo"
           className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300"
         >
-          + Create New
+          + Crear Nuevo
         </Link>
       </div>
 
@@ -127,7 +127,7 @@ const AdminElectrodomesticosPage = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {['Name', 'Category', 'Brand', 'Price', 'Stock', 'Active', 'Actions'].map((header) => (
+                {['Nombre', 'Categoría', 'Marca', 'Precio', 'Stock', 'Activo', 'Acciones'].map((header) => (
                   <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
@@ -160,7 +160,7 @@ const AdminElectrodomesticosPage = () => {
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                       appliance.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {appliance.is_active ? 'Yes' : 'No'}
+                      {appliance.is_active ? 'Si' : 'No'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
@@ -168,13 +168,13 @@ const AdminElectrodomesticosPage = () => {
                       href={`/admin/electrodomesticos/editar/${appliance.id}`}
                       className="text-indigo-600 hover:text-indigo-900"
                     >
-                      Edit
+                      Editar
                     </Link>
                     <button
                       onClick={() => handleDelete(appliance.id, appliance.name)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      Delete
+                      Borrar
                     </button>
                   </td>
                 </tr>
