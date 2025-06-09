@@ -1,83 +1,87 @@
 // src/app/admin/repuestos/nuevo/page.tsx
 "use client";
 
-import RepuestoForm, { RepuestoFormData } from '@/components/admin/RepuestoForm';
-// No necesitamos useRouter aquí porque la redirección la maneja RepuestoForm
-// import { useRouter } from 'next/navigation'; 
-import  supabase  from '@/lib/supabase/client'; // Importa tu cliente Supabase del frontend
-import toast from 'react-hot-toast';             // Importa toast
+import RepuestoForm from '@/components/admin/RepuestoForm';
+import supabase from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 export default function CrearRepuestoPage() {
-  // const router = useRouter(); // No es necesario aquí si RepuestoForm lo maneja
+  const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleCreateRepuesto = async (formData: RepuestoFormData): Promise<boolean> => {
-    // formData aquí ya está procesada por el handleSubmit de RepuestoForm
-    // (validación Zod del cliente, conversión de strings a arrays/objetos)
-    console.log("Datos a enviar a la API para crear REPUESTO:", formData);
-    toast.dismiss(); // Limpiar toasts anteriores
+  const handleSubmit = async (formData: FormData): Promise<boolean> => {
+    setErrorMessage(null);
+    toast.dismiss();
 
     if (!supabase) {
-      toast.error("Error de configuración: Cliente Supabase no disponible.");
+      const error = "Error de configuración: Cliente Supabase no disponible.";
+      toast.error(error);
+      setErrorMessage(error);
       return false;
     }
     
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
     if (sessionError || !session) {
-      console.error("Error obteniendo sesión o no hay sesión:", sessionError);
       toast.error("No estás autenticado o tu sesión ha expirado. Redirigiendo a login...");
-      // Idealmente, el layout de admin ya haría esta redirección si la sesión es null.
-      // Pero como medida de seguridad extra:
-      // router.push('/admin/login'); // Descomentar si quieres forzar redirección desde aquí
+      setErrorMessage("No estás autenticado o tu sesión ha expirado.");
+      router.push('/admin/login');
       return false;
     }
-    const token = session.access_token;
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-    const loadingToastId = toast.loading('Creando repuesto...'); // Toast de carga
+    const loadingToastId = toast.loading('Creando repuesto...');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/repuestos`, { // CAMBIO: Endpoint /repuestos
+      const response = await fetch(`${API_BASE_URL}/repuestos`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // AÑADIR TOKEN
+          'Authorization': `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify(formData),
+        body: formData,
       });
 
-      const responseData = await response.json().catch(() => {
-          toast.dismiss(loadingToastId);
-          if (response.status === 201) {
-              toast.success('¡Repuesto creado exitosamente! (Respuesta no JSON)');
-              return { success: true };
-          }
-          toast.error(`Error del servidor: ${response.statusText} (Respuesta no JSON)`);
-          return { message: `Error del servidor: ${response.statusText}`, fieldErrors: null, success: false };
-      });
-      
       toast.dismiss(loadingToastId);
 
-      if (!response.ok) {
-        console.error('Error API al crear repuesto:', response.status, responseData);
-        let errorMessage = responseData.message || `Error al crear repuesto: ${response.statusText}`;
-        if (responseData.fieldErrors) {
-          const fieldErrorMessages = Object.values(responseData.fieldErrors).flat().join(', ');
-          if (fieldErrorMessages) errorMessage += ` Detalles: ${fieldErrorMessages}`;
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        if (response.status === 201) {
+          toast.success('¡Repuesto creado exitosamente!');
+          router.push('/admin/repuestos');
+          router.refresh();
+          return true;
         }
-        toast.error(errorMessage);
+        const textResponse = await response.text();
+        const error = `Error del servidor: ${response.status} - ${textResponse.substring(0, 100)}`;
+        toast.error(error);
+        setErrorMessage(error);
         return false;
       }
 
-      // const nuevoRepuesto = responseData; // Ya es el objeto parseado
-      console.log('Repuesto creado:', responseData);
-      toast.success(responseData.message || '¡Repuesto creado exitosamente!');
-      return true; // Indica éxito para que RepuestoForm maneje la redirección
+      const responseData = await response.json();
+      if (!response.ok) {
+        let error = responseData?.message || `Error al crear repuesto: ${response.statusText}`;
+        if (responseData?.fieldErrors) {
+          error += ` Detalles: ${Object.values(responseData.fieldErrors).flat().join(', ')}`;
+        } else if (responseData?.details) {
+          error += ` Detalles: ${responseData.details}`;
+        }
+        toast.error(error);
+        setErrorMessage(error);
+        return false;
+      }
+
+      toast.success(responseData?.message || '¡Repuesto creado exitosamente!');
+      router.push('/admin/repuestos');
+      router.refresh();
+      return true;
 
     } catch (error: any) {
       toast.dismiss(loadingToastId);
-      console.error('Excepción al crear repuesto:', error);
-      toast.error(error.message || 'Ocurrió una excepción al intentar crear el repuesto.');
+      const errorMsg = error.message || 'Ocurrió una excepción al intentar crear el repuesto.';
+      toast.error(errorMsg);
+      setErrorMessage(errorMsg);
       return false;
     }
   };
@@ -87,8 +91,13 @@ export default function CrearRepuestoPage() {
       <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F] mb-6">
         Crear Nuevo Repuesto
       </h1>
+      {errorMessage && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          <p>{errorMessage}</p>
+        </div>
+      )}
       <RepuestoForm 
-        onSubmit={handleCreateRepuesto} 
+        onSubmit={handleSubmit} 
         isEditing={false} 
       />
     </div>

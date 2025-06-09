@@ -2,178 +2,273 @@
 "use client";
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import LoadingSpinner from '@/components/ui/LoadingSpinner'; // Ajusta la ruta si es necesario
+import { useEffect, useState, useCallback, ChangeEvent } from 'react';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import supabase from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
 
-// 1. Define o importa la interfaz Repuesto
-export interface Repuesto {
+// Interfaz adaptada para Repuesto, incluyendo los campos necesarios para la tabla.
+export interface RepuestoListItem {
   id: string;
   name: string;
   price: number;
-  stock?: number;
+  stock?: number | null;
   category: string;
   brand: string;
   is_original?: boolean;
   is_active?: boolean;
-  // Añade otros campos que quieras mostrar en la tabla
+  image_url?: string | null;
 }
 
-// 2. Función para hacer fetch a la API de REPUESTOS
-async function fetchAdminRepuestos(): Promise<Repuesto[]> {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const ITEMS_PER_PAGE = 10;
+
+// Función de fetch adaptada para Repuestos, con todos los filtros.
+async function fetchAdminRepuestosFromAPI(
+  page: number = 1,
+  limit: number = ITEMS_PER_PAGE,
+  searchTerm: string = '',
+  categoryFilter: string = '',
+  brandFilter: string = '',
+  statusFilter: string = '',
+  originalFilter: string = '' // Nuevo filtro para 'is_original'
+): Promise<{ data: RepuestoListItem[], totalItems: number, totalPages: number, currentPage: number, error: string | null }> {
+  const queryParams = new URLSearchParams({ page: String(page), limit: String(limit) });
+  if (searchTerm.trim()) queryParams.append('q', searchTerm.trim());
+  if (categoryFilter) queryParams.append('category', categoryFilter);
+  if (brandFilter) queryParams.append('brand', brandFilter);
+  if (statusFilter) queryParams.append('is_active', statusFilter);
+  if (originalFilter) queryParams.append('is_original', originalFilter); // Añadir nuevo filtro a la query
+
+  const endpoint = `${API_BASE_URL}/repuestos?${queryParams.toString()}`;
   try {
-    const res = await fetch(`${API_BASE_URL}/repuestos?limit=100`, { // O implementa paginación
-      cache: 'no-store',
-    });
+    const res = await fetch(endpoint, { cache: 'no-store' });
     if (!res.ok) {
-      // En un caso real, podrías lanzar un error o devolverlo para mostrarlo en la UI
-      console.error('Error al cargar repuestos para admin:', await res.text());
-      return [];
+      let errorDetail = `Error: ${res.status}`; try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch(e){}
+      return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: errorDetail };
     }
-    const responseData = await res.json();
-    return responseData.data || [];
-  } catch (error) {
-    console.error("Error en fetchAdminRepuestos:", error);
-    return [];
-  }
+    const d = await res.json();
+    return { data: d.data || [], totalItems: d.totalItems || 0, totalPages: d.totalPages || 0, currentPage: d.currentPage || page, error: null };
+  } catch (e: any) { return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: e.message || "Error de red" }; }
 }
 
-// 3. Función para ELIMINAR un REPUESTO vía API
-async function deleteRepuestoAPI(id: string): Promise<boolean> {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  // Necesitarás obtener el token JWT si tus rutas DELETE están protegidas
-  // import { supabase } from '@/lib/supabase/client'; // Asume que tienes este cliente
-  // const { data: { session } } = await supabase.auth.getSession();
-  // if (!session) { alert("No autenticado"); return false; }
-  // const token = session.access_token;
-
+// Función de borrado adaptada para Repuestos.
+async function deleteRepuestoFromAPI(id: string): Promise<{ success: boolean, error: string | null }> {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !session) return { success: false, error: "No autenticado" };
   try {
-    const res = await fetch(`${API_BASE_URL}/repuestos/${id}`, {
-      method: 'DELETE',
-      // headers: { 'Authorization': `Bearer ${token}` }, // Descomenta si la ruta está protegida
-    });
-    if (!res.ok && res.status !== 204) {
-        const errorData = await res.json().catch(() => ({ message: 'Error al eliminar, respuesta no JSON' }));
-        console.error('Error al eliminar repuesto:', res.status, errorData);
-        alert(`Error al eliminar: ${errorData.message || res.statusText}`);
-        return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("Excepción al eliminar repuesto:", error);
-    alert('Excepción al eliminar repuesto.');
-    return false;
-  }
+    const res = await fetch(`${API_BASE_URL}/repuestos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
+    if (res.ok) return { success: true, error: null };
+    let errorDetail = `Error: ${res.status}`; try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch(e){}
+    return { success: false, error: errorDetail };
+  } catch (e: any) { return { success: false, error: e.message || "Excepción" }; }
 }
 
-// 4. Componente de Página Admin para Repuestos
 export default function AdminRepuestosPage() {
-  const [repuestos, setRepuestos] = useState<Repuesto[]>([]);
-  const [loading, setLoading] = useState(true); // Inicia en true
+  const [repuestos, setRepuestos] = useState<RepuestoListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
+  
+  // Estados para los filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedOriginal, setSelectedOriginal] = useState(''); // Nuevo estado para el filtro 'original'
+  
+  // Estados para las opciones de los filtros
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [brandOptions, setBrandOptions] = useState<string[]>([]);
 
-  const loadRepuestos = async () => {
-    setLoading(true); // Establece loading a true antes de la petición
-    const data = await fetchAdminRepuestos();
-    setRepuestos(data);
-    setLoading(false); // Establece loading a false después de obtener los datos
-  };
-
+  // Clases de Tailwind reutilizables de tu paleta
+  const primaryButtonClasses = "bg-[#002A7F] hover:bg-[#002266] text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors duration-150";
+  const secondaryButtonClasses = "bg-white hover:bg-[#EBF4FF] text-[#002A7F] font-semibold py-2 px-3 border border-[#002A7F] rounded-lg shadow-sm hover:text-[#002266] transition-colors duration-150";
+  const inputFormClasses = "block w-full mt-1 px-3 py-2 border border-[#718096] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F] sm:text-sm text-[#2D3748] bg-white";
+  const labelFormClasses = "block text-sm font-medium text-[#2D3748] mb-0.5";
+  const thAdminClasses = "px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#718096] uppercase tracking-wider";
+  const tdAdminClasses = "px-4 sm:px-6 py-3 whitespace-nowrap text-sm text-[#718096]";
+  const statusBadgeBase = "px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full";
+  const statusActiveClasses = `${statusBadgeBase} bg-[#EBF4FF] text-[#002A7F]`;
+  const statusInactiveClasses = `${statusBadgeBase} bg-[#FEE2E2] text-[#C8102E]`;
+  const linkEditClasses = "text-[#002A7F] hover:text-[#002266] hover:underline";
+  const linkDeleteClasses = "text-[#C8102E] hover:text-red-700 hover:underline";
+  
+  // Cargar opciones para los filtros de categoría y marca
   useEffect(() => {
-    loadRepuestos();
+    const fetchOptions = async () => {
+      try {
+        const [catRes, brandRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/repuestos/config/categories`),
+          fetch(`${API_BASE_URL}/repuestos/config/brands`)
+        ]);
+        if (catRes.ok) { const data = await catRes.json(); if(Array.isArray(data)) setCategoryOptions(data); }
+        if (brandRes.ok) { const data = await brandRes.json(); if(Array.isArray(data)) setBrandOptions(data); }
+      } catch (e) { console.error("Error fetching filter options:", e); toast.error("Error cargando opciones de filtro."); }
+    };
+    fetchOptions();
   }, []);
 
+  const loadRepuestos = useCallback(async (pageToLoad: number) => {
+    setLoading(true); setError(null);
+    const result = await fetchAdminRepuestosFromAPI(pageToLoad, ITEMS_PER_PAGE, searchTerm, selectedCategory, selectedBrand, selectedStatus, selectedOriginal);
+    if (result.error) {
+      setError(result.error); setRepuestos([]); setTotalItems(0); setTotalPages(0);
+    } else {
+      setRepuestos(result.data); setTotalItems(result.totalItems);
+      setTotalPages(result.totalPages); setCurrentPage(result.currentPage);
+    }
+    setLoading(false);
+  }, [searchTerm, selectedCategory, selectedBrand, selectedStatus, selectedOriginal]);
+
+  useEffect(() => {
+    loadRepuestos(currentPage);
+  }, [currentPage, loadRepuestos]);
+
+  const handleFilterAction = () => {
+    if (currentPage !== 1) setCurrentPage(1);
+    else loadRepuestos(1);
+  };
+  
+  const clearFiltersAndReload = () => {
+    setSearchTerm(''); setSelectedCategory(''); setSelectedBrand(''); setSelectedStatus(''); setSelectedOriginal('');
+    if (currentPage !== 1) setCurrentPage(1);
+    else loadRepuestos(1);
+  };
+
   const handleDelete = async (id: string, name: string) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar el repuesto "${name}"? Esta acción no se puede deshacer.`)) {
-      // Podrías setear un estado de "eliminando específico" aquí si quieres
-      const success = await deleteRepuestoAPI(id);
-      if (success) {
-        // En lugar de alert, usa toast si ya lo tienes configurado
-        // toast.success('Repuesto eliminado exitosamente.');
-        alert('Repuesto eliminado exitosamente.'); 
-        loadRepuestos(); // Recargar la lista para reflejar el cambio
+    if (window.confirm(`¿Eliminar el repuesto "${name}"?`)) {
+      const toastId = toast.loading("Eliminando...");
+      const result = await deleteRepuestoFromAPI(id);
+      toast.dismiss(toastId);
+      if (result.success) {
+        toast.success("Repuesto eliminado exitosamente.");
+        if (repuestos.length === 1 && currentPage > 1) setCurrentPage(prev => prev - 1);
+        else loadRepuestos(currentPage);
+      } else {
+        toast.error(result.error || "Error al eliminar el repuesto.");
       }
-      // El alert/toast de error ya se maneja en deleteRepuestoAPI
     }
   };
 
-  if (loading) {
-    // Muestra el spinner mientras los datos se cargan
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage && !loading) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const renderPaginationControls = () => {
+    if (totalPages <= 1) return null;
+    const pageNumbers = []; const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+    if (totalPages >= maxPagesToShow && endPage - startPage + 1 < maxPagesToShow) startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    else if (totalPages < maxPagesToShow) { startPage = 1; endPage = totalPages; }
+    for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
+    
+    const baseBtn = "px-3 py-1.5 text-sm font-medium border rounded-md disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150";
+    const activeBtn = `bg-[#002A7F] text-[#F7FAFC] border-[#002A7F]`;
+    const inactiveBtn = `bg-white text-[#002A7F] border-[#718096] hover:bg-[#EBF4FF] hover:text-[#002266] hover:border-[#002A7F]`;
+    const ellipsisClass = "px-1 sm:px-2 py-1.5 text-sm text-[#718096]";
+
     return (
-      <div className="container mx-auto p-4 flex justify-center items-center min-h-[calc(100vh-200px)]"> {/* Ajusta min-h según tu layout */}
-        <LoadingSpinner size={60} />
+      <div className="mt-6 flex flex-wrap justify-center items-center space-x-1">
+        <button onClick={() => handlePageChange(1)} disabled={currentPage === 1 || loading} className={`${baseBtn} ${inactiveBtn}`}>{"<<"}</button>
+        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1 || loading} className={`${baseBtn} ${inactiveBtn}`}>{"<"}</button>
+        {startPage > 1 && (<><button onClick={() => handlePageChange(1)} disabled={loading} className={`${baseBtn} ${inactiveBtn}`}>1</button>{startPage > 2 && <span className={ellipsisClass}>...</span>}</>)}
+        {pageNumbers.map(num => (<button key={num} onClick={() => handlePageChange(num)} disabled={loading} className={`${baseBtn} ${currentPage === num ? activeBtn : inactiveBtn}`}>{num}</button>))}
+        {endPage < totalPages && (<>{endPage < totalPages -1 && <span className={ellipsisClass}>...</span>}<button onClick={() => handlePageChange(totalPages)} disabled={loading} className={`${baseBtn} ${inactiveBtn}`}>{totalPages}</button></>)}
+        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages || loading} className={`${baseBtn} ${inactiveBtn}`}>{">"}</button>
+        <button onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages || loading} className={`${baseBtn} ${inactiveBtn}`}>{">>"}</button>
       </div>
     );
-  }
+  };
+
+  if (loading && repuestos.length === 0) return (<div className="flex justify-center items-center min-h-[calc(100vh-12rem)] bg-[#F7FAFC]"><LoadingSpinner size={50} /><p className="ml-3 text-[#718096] text-lg">Cargando repuestos...</p></div>);
+  if (error && repuestos.length === 0) return (<div className="text-center p-6 bg-[#F7FAFC] min-h-[calc(100vh-12rem)] flex flex-col justify-center items-center"><p className="text-[#C8102E] text-xl font-semibold mb-2">Error al Cargar</p><p className="text-[#C8102E] mb-4">{error}</p><button onClick={() => loadRepuestos(1)} className={primaryButtonClasses}>Reintentar</button></div>);
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F]">
-          Gestión de Repuestos
-        </h1>
+    <div className="container mx-auto p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F]">Gestión de Repuestos ({totalItems})</h1>
         <Link href="/admin/repuestos/nuevo" legacyBehavior>
-          <a className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-300">
-            + Crear Nuevo Repuesto
-          </a>
+          <a className={`${primaryButtonClasses} text-sm sm:text-base`}>+ Crear Nuevo</a>
         </Link>
       </div>
 
-      {repuestos.length === 0 ? (
-        <p className="text-center text-gray-600 py-8">No hay repuestos para mostrar. ¡Crea uno nuevo!</p>
-      ) : (
-        <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoría</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marca</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">¿Original?</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activo</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {repuestos.map((repuesto) => (
-                <tr key={repuesto.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{repuesto.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{repuesto.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{repuesto.brand}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(repuesto.price)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{repuesto.stock ?? 'N/A'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {repuesto.is_original !== undefined ? (repuesto.is_original ? 'Sí' : 'No') : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      repuesto.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {repuesto.is_active ? 'Sí' : 'No'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link href={`/admin/repuestos/editar/${repuesto.id}`} legacyBehavior>
-                      <a className="text-indigo-600 hover:text-indigo-900 mr-3">Editar</a>
-                    </Link>
-                    <button
-                      onClick={() => handleDelete(repuesto.id, repuesto.name)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Eliminar
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Sección de Filtros */}
+      <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+          <div><label htmlFor="searchTerm" className={labelFormClasses}>Buscar por nombre</label><input type="text" id="searchTerm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Nombre, marca..." className={inputFormClasses} /></div>
+          <div><label htmlFor="selectedCategory" className={labelFormClasses}>Categoría</label><select id="selectedCategory" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{categoryOptions.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
+          <div><label htmlFor="selectedBrand" className={labelFormClasses}>Marca</label><select id="selectedBrand" value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{brandOptions.map(b=><option key={b} value={b}>{b}</option>)}</select></div>
+          <div><label htmlFor="selectedStatus" className={labelFormClasses}>Estado</label><select id="selectedStatus" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={inputFormClasses}><option value="">Todos</option><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+          <div><label htmlFor="selectedOriginal" className={labelFormClasses}>Original</label><select id="selectedOriginal" value={selectedOriginal} onChange={(e) => setSelectedOriginal(e.target.value)} className={inputFormClasses}><option value="">Todos</option><option value="true">Sí</option><option value="false">No</option></select></div>
         </div>
+        <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <button onClick={clearFiltersAndReload} className={`${secondaryButtonClasses} text-xs sm:text-sm`}>Limpiar Filtros</button>
+            <button onClick={handleFilterAction} className={`${primaryButtonClasses} text-xs sm:text-sm`}>Aplicar Filtros</button>
+        </div>
+      </div>
+
+      {error && repuestos.length > 0 && <p className={`text-center text-[#C8102E] mb-4 p-3 bg-[#FEE2E2] border border-[#C8102E] rounded-md text-sm`}>{error}</p>}
+      {loading && repuestos.length > 0 && <div className="my-4 flex justify-center items-center"><LoadingSpinner size={24} /> <span className="ml-2 text-[#718096]">Actualizando lista...</span></div>}
+      
+      {repuestos.length === 0 && !loading && !error ? (<p className="text-center text-[#718096] py-12 text-lg">No hay repuestos que coincidan con los filtros aplicados.</p>) : (
+        <>
+          <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
+            <table className="min-w-full divide-y divide-[#EBF4FF]">
+              <thead className="bg-[#EBF4FF]">
+                <tr>
+                  <th className={`${thAdminClasses} w-16`}>Imagen</th>
+                  <th className={thAdminClasses}>Nombre</th>
+                  <th className={thAdminClasses}>Categoría</th>
+                  <th className={thAdminClasses}>Marca</th>
+                  <th className={`${thAdminClasses} text-right`}>Precio</th>
+                  <th className={`${thAdminClasses} text-center`}>Stock</th>
+                  <th className={`${thAdminClasses} text-center`}>Original</th>
+                  <th className={`${thAdminClasses} text-center`}>Estado</th>
+                  <th className={thAdminClasses}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-[#EBF4FF]">
+                {repuestos.map((item) => (
+                  <tr key={item.id} className="hover:bg-[#EBF4FF] transition-colors duration-150">
+                    <td className={`${tdAdminClasses} py-2 px-3 sm:px-4`}>
+                        <div className="h-10 w-10 flex-shrink-0">
+                            {item.image_url ? 
+                                <Image src={item.image_url} alt={item.name} width={40} height={40} className="rounded-md object-cover h-full w-full"/> 
+                                : <div className="h-10 w-10 rounded-md bg-[#EBF4FF] text-xs flex items-center justify-center text-[#718096]">N/A</div>
+                            }
+                        </div>
+                    </td>
+                    <td className={`${tdAdminClasses} font-medium text-[#2D3748]`}>{item.name}</td>
+                    <td className={tdAdminClasses}>{item.category}</td>
+                    <td className={tdAdminClasses}>{item.brand}</td>
+                    <td className={`${tdAdminClasses} text-right`}>{new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(item.price)}</td>
+                    <td className={`${tdAdminClasses} text-center`}>{item.stock ?? 'N/A'}</td>
+                    <td className={`${tdAdminClasses} text-center`}>
+                        {item.is_original === true ? 'Sí' : item.is_original === false ? 'No' : 'N/A'}
+                    </td>
+                    <td className={`${tdAdminClasses} text-center`}>
+                        <span className={item.is_active ? statusActiveClasses : statusInactiveClasses}>
+                            {item.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </td>
+                    <td className={`${tdAdminClasses} space-x-2 whitespace-nowrap`}>
+                        <Link href={`/admin/repuestos/editar/${item.id}`} legacyBehavior><a className={linkEditClasses}>Editar</a></Link>
+                        <button onClick={() => handleDelete(item.id, item.name)} className={linkDeleteClasses}>Borrar</button>
+                    </td>
+                  </tr>))}
+              </tbody>
+            </table>
+          </div>
+          {renderPaginationControls()}
+        </>
       )}
-      {/* Aquí podrías añadir controles de paginación si fetchAdminRepuestos la implementa 
-          y devuelve totalPages, currentPage etc. */}
     </div>
   );
 }

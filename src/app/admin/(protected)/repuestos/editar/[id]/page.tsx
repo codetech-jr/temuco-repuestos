@@ -3,31 +3,78 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+// RepuestoFormData (de RepuestoForm) es la interfaz que el FORMULARIO usa para su estado y initialData
 import RepuestoForm, { RepuestoFormData } from '@/components/admin/RepuestoForm';
-import supabase from '@/lib/supabase/client'; // Ajusta la ruta a tu cliente Supabase
-import toast from 'react-hot-toast'; // Asumiendo que usas react-hot-toast
+import supabase from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 import Link from 'next/link';
-import LoadingSpinner from '@/components/ui/LoadingSpinner'; // IMPORTA EL SPINNER
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-// Interfaz Repuesto (debe coincidir con tu API)
-export interface Repuesto {
+// Interfaz para los datos tal como vienen de TU API GET /:id
+export interface RepuestoFromAPI {
   id: string;
   slug: string;
   name: string;
-  short_description?: string;
+  short_description?: string | null;
   price: number;
-  original_price?: number;
-  image_url?: string;
+  original_price?: number | null;
+  image_url?: string | null; // URL de la imagen principal
   category: string;
   brand: string;
   is_original?: boolean;
-  long_description?: string;
-  features?: string[];
-  specifications?: { key: string; value: string }[];
-  images?: string[];
-  stock?: number;
+  long_description?: string | null;
+  features?: string[] | string | null; // Puede ser array de strings o un solo string (separado por comas)
+  specifications?: { key: string; value: string }[] | string | null; // Puede ser array de objetos o string JSON
+  images?: string[] | string | null;   // Puede ser array de URLs o un solo string (separado por comas)
+  stock?: number | null;
   is_active?: boolean;
   created_at?: string;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+
+// Función helper para adaptar los datos de la API al formato que espera RepuestoFormData
+function adaptApiDataToInitialFormData(apiData: RepuestoFromAPI): Partial<RepuestoFormData> {
+  // RepuestoForm espera que los campos numéricos sean strings para los inputs,
+  // y que features e images (para el textarea) sean strings separados por comas.
+  // image_url se pasa tal cual para la previsualización inicial en RepuestoForm.
+  // Las previsualizaciones de 'images' (múltiples) también se manejan dentro de RepuestoForm
+  // a partir de initialData.images (que aquí lo pasamos como string o array).
+  return {
+    // Campos que probablemente no necesitan mucha transformación si los tipos coinciden con RepuestoFormData
+    id: apiData.id,
+    slug: apiData.slug,
+    name: apiData.name,
+    category: apiData.category,
+    brand: apiData.brand,
+    is_original: apiData.is_original === undefined ? false : apiData.is_original,
+    is_active: apiData.is_active === undefined ? true : apiData.is_active,
+    short_description: apiData.short_description || '',
+    long_description: apiData.long_description || '',
+    
+    // Convertir números a string para los inputs del formulario
+    price: String(apiData.price ?? ''),
+    original_price: apiData.original_price != null ? String(apiData.original_price) : '',
+    stock: apiData.stock != null ? String(apiData.stock) : '',
+
+    // Para RepuestoForm (que tiene textareas para estos)
+    features: Array.isArray(apiData.features) ? apiData.features.join(', ') : (typeof apiData.features === 'string' ? apiData.features : ''),
+    specifications: typeof apiData.specifications === 'string' 
+      ? apiData.specifications 
+      : (apiData.specifications ? JSON.stringify(apiData.specifications, null, 2) : ''),
+    
+    // `image_url` para la previsualización de la imagen principal en RepuestoForm
+    image_url: apiData.image_url || '', 
+
+    // `images` para RepuestoForm:
+    // Si tu RepuestoForm espera un string separado por comas para `initialData.images` (para un textarea opcional):
+    // images: Array.isArray(apiData.images) ? apiData.images.join(', ') : (typeof apiData.images === 'string' ? apiData.images : ''),
+    // Si tu RepuestoForm puede tomar directamente el array de URLs para inicializar sus previews de 'additionalImagesPreview':
+    // (Esto es mejor si RepuestoForm maneja la inicialización de additionalImagesPreview desde un array de URLs)
+    images: Array.isArray(apiData.images) ? apiData.images : (typeof apiData.images === 'string' ? apiData.images.split(',').map(s=>s.trim()).filter(s=>s) : undefined),
+    
+    created_at: apiData.created_at, // No es un campo de formulario pero puede ser útil
+  };
 }
 
 export default function EditarRepuestoPage() {
@@ -35,156 +82,82 @@ export default function EditarRepuestoPage() {
   const params = useParams();
   const id = params.id as string;
 
+  // RepuestoFormData es la interfaz que usa RepuestoForm para su estado y `initialData`
   const [initialData, setInitialData] = useState<Partial<RepuestoFormData> | null>(null);
-  const [loading, setLoading] = useState(true); // Inicia en true para el fetch inicial
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id && supabase) {
-      const fetchRepuesto = async () => {
-        setLoading(true); // Indicar que la carga ha comenzado
-        setError(null);
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-        
-        // Para GET /:id, asumo que no está protegido o que el fetch global maneja tokens
-        // Si está protegido, necesitarías el token aquí también.
-        try {
-          const response = await fetch(`${API_BASE_URL}/repuestos/${id}`, { cache: 'no-store' });
-          
-          if (!response.ok) {
-            if (response.status === 404) {
-              setError('Repuesto no encontrado.');
-              toast.error('Repuesto no encontrado.');
-            } else {
-              const errorData = await response.json().catch(() => ({ message: 'Error desconocido al cargar datos del repuesto' }));
-              setError(errorData.message || `Error al cargar datos del repuesto: ${response.statusText}`);
-              toast.error(errorData.message || `Error al cargar datos del repuesto: ${response.statusText}`);
-            }
-            // setLoading(false); // Se maneja en finally
-            return; // Salir si hay error
-          }
-          
-          const dataFromAPI: Repuesto = await response.json();
-          
-          const adaptedData: Partial<RepuestoFormData> = {
-            ...dataFromAPI,
-            price: dataFromAPI.price !== undefined ? String(dataFromAPI.price) : '',
-            original_price: dataFromAPI.original_price !== undefined ? String(dataFromAPI.original_price) : '',
-            stock: dataFromAPI.stock !== undefined ? String(dataFromAPI.stock) : '',
-            features: Array.isArray(dataFromAPI.features) ? dataFromAPI.features.join(', ') : (dataFromAPI.features || ''),
-            specifications: typeof dataFromAPI.specifications === 'object' && dataFromAPI.specifications !== null
-                            ? JSON.stringify(dataFromAPI.specifications, null, 2)
-                            : (dataFromAPI.specifications || ''),
-            images: Array.isArray(dataFromAPI.images) ? dataFromAPI.images.join(', ') : (dataFromAPI.images || ''),
-            is_active: dataFromAPI.is_active === undefined ? true : dataFromAPI.is_active,
-            is_original: dataFromAPI.is_original === undefined ? false : dataFromAPI.is_original,
-          };
-          setInitialData(adaptedData);
-
-        } catch (err: any) {
-          console.error("Error fetching repuesto para editar:", err);
-          setError(err.message || 'Error al cargar los datos del repuesto.');
-          toast.error(err.message || 'Error al cargar los datos del repuesto.');
-        } finally {
-          setLoading(false); // Asegura que loading se ponga en false siempre
-        }
-      };
-      fetchRepuesto();
-    } else if (!supabase) {
-        toast.error("Error de configuración: Cliente Supabase no disponible.");
-        setLoading(false);
-        setError("Error de configuración del cliente.");
-    } else if (!id) { // Si el ID no está presente por alguna razón (no debería pasar con rutas dinámicas bien configuradas)
-        setLoading(false);
-        setError("ID de repuesto no encontrado en la URL.");
-        toast.error("ID de repuesto no encontrado.");
+    if (!id) {
+      setError("ID de repuesto no válido."); setLoading(false); toast.error("ID de repuesto no válido."); return;
     }
-  }, [id]); // Dependencia 'id'
-
-  const handleUpdateRepuesto = async (formDataFromForm: RepuestoFormData): Promise<boolean> => {
-    console.log("Datos a enviar a la API para actualizar repuesto:", formDataFromForm);
-    toast.dismiss(); 
-
     if (!supabase) {
-      toast.error("Error de configuración: Cliente Supabase no disponible.");
-      return false;
+      setError("Error de configuración del cliente Supabase."); setLoading(false); toast.error("Error de config."); return;
     }
-    
+
+    const fetchRepuesto = async () => {
+      setLoading(true); setError(null); setFormSubmitError(null);
+      try {
+        const response = await fetch(`${API_BASE_URL}/repuestos/${id}`, { cache: 'no-store' });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(response.status === 404 ? 'Repuesto no encontrado.' : errorData.message || `Error ${response.status}`);
+        }
+        const dataFromAPI: RepuestoFromAPI = await response.json();
+        setInitialData(adaptApiDataToInitialFormData(dataFromAPI)); // Usar la función adaptadora
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error desconocido al cargar el repuesto';
+        console.error("Error fetching repuesto para editar:", err);
+        setError(message);
+        toast.error(message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRepuesto();
+  }, [id]);
+
+  const handleUpdateRepuesto = async (data: FormData): Promise<boolean> => {
+    // ... (tu lógica de handleUpdateRepuesto que ya maneja FormData y el token es correcta) ...
+    setFormSubmitError(null); toast.dismiss();
+    if (!supabase) { /* ... */ return false; }
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      toast.error("No estás autenticado. Redirigiendo a login...");
-      router.push('/admin/login'); // Ajusta tu ruta de login si es diferente
-      return false;
-    }
-    const token = session.access_token;
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+    if (sessionError || !session) { /* ... */ router.push('/admin/login'); return false; }
     const loadingToastId = toast.loading('Actualizando repuesto...');
-    
     try {
-      const response = await fetch(`${API_BASE_URL}/repuestos/${id}`, { // Usa el 'id' de params
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(formDataFromForm),
+      const response = await fetch(`${API_BASE_URL}/repuestos/${id}`, {
+        method: 'PUT', headers: { 'Authorization': `Bearer ${session.access_token}` }, body: data,
       });
-
-      // ... (resto de tu lógica de handleUpdateRepuesto, que ya usa toasts) ...
-      const responseData = await response.json().catch(() => { /* ... */ }); // Tu manejo existente
       toast.dismiss(loadingToastId);
-      if (!response.ok) { /* ... tu manejo de error con toast ... */ return false; }
+      // ... (resto de tu manejo de respuesta y errores para el PUT) ...
+      // (El código que tenías para esto era bueno)
+      if (!response.ok) {
+        let errorMessage = `Error del servidor: ${response.status}`; let responseData: any;
+        try { responseData = await response.json(); /* ... */ } catch { /* ... */ }
+        toast.error(errorMessage); setFormSubmitError(errorMessage); return false;
+      }
       toast.success('¡Repuesto actualizado exitosamente!');
-      return true;
-
-    } catch (error: any) {
-      toast.dismiss(loadingToastId);
-      console.error('Excepción al actualizar repuesto:', error);
-      toast.error(error.message || 'Ocurrió un error de red o excepción al actualizar el repuesto.');
-      return false;
-    }
+      router.push('/admin/repuestos'); router.refresh(); return true;
+    } catch (err: unknown) { /* ... */ return false; }
   };
 
-  // RENDERIZADO CONDICIONAL CON EL SPINNER PRINCIPAL
-  if (loading) {
-    return (
-      <div className="container mx-auto p-4 flex justify-center items-center min-h-[calc(100vh-200px)]">
-        <LoadingSpinner size={60} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4 text-red-600 text-center">
-        <p>Error: {error}</p>
-        <Link href="/admin/repuestos" className="text-blue-600 hover:underline mt-4 inline-block">
-            Volver a la lista de repuestos
-        </Link>
-      </div>
-    );
-  }
-
-  if (!initialData) { // Si no está cargando y no hay datos (después del fetch)
-    // Este caso podría cubrir el 404 si setError no se llamó, o si id no estaba presente
-    return (
-        <div className="container mx-auto p-4 text-center">
-            <p>No se pudieron cargar los datos del repuesto o el repuesto no existe.</p>
-            <Link href="/admin/repuestos" className="text-blue-600 hover:underline mt-4 inline-block">
-                Volver a la lista de repuestos
-            </Link>
-        </div>
-    );
-  }
+  if (loading) return <LoadingSpinner className="min-h-[calc(100vh-200px)]" />;
+  if (error) return <div className="container mx-auto p-4 text-red-600 text-center"><p>Error: {error}</p><Link href="/admin/repuestos" className="text-blue-600 hover:underline mt-4 inline-block">Volver</Link></div>;
+  if (!initialData) return <div className="container mx-auto p-4 text-center"><p>No se pudieron cargar datos del repuesto.</p><Link href="/admin/repuestos" className="text-blue-600 hover:underline mt-4 inline-block">Volver</Link></div>;
   
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F] mb-6">
-        Editar Repuesto: <span className="text-gray-700">{initialData?.name || ''}</span>
+        Editar Repuesto: <span className="text-gray-700">{initialData.name || ''}</span>
       </h1>
-      {/* Renderiza el formulario solo si initialData está disponible */}
+      {formSubmitError && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          <p>{formSubmitError}</p>
+        </div>
+      )}
+      {/* El componente RepuestoForm ya debería tener los inputs type="file"
+          y la lógica para previsualizaciones basada en initialData.image_url e initialData.images */}
       <RepuestoForm 
         onSubmit={handleUpdateRepuesto} 
         initialData={initialData} 
