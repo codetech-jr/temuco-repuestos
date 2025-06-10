@@ -4,7 +4,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useState } from 'react'; // Para el menú móvil
+import { useState } from 'react';
+// ANIMACIÓN: Importamos motion y AnimatePresence
+import { motion, AnimatePresence } from 'framer-motion';
+import { IoClose, IoMenu } from 'react-icons/io5'; // Usaremos íconos de react-icons para facilitar la animación
 
 export default function AdminNavbarDashboard() {
   const { user, signOut, isLoading } = useAuth();
@@ -13,135 +16,151 @@ export default function AdminNavbarDashboard() {
 
   const navItems = [
     { name: 'Dashboard', href: '/admin/dashboard' },
-    // { name: 'Productos', href: '/admin/products' }, // Ejemplo
-    // { name: 'Pedidos', href: '/admin/orders' },   // Ejemplo
   ];
 
   const handleSignOut = async () => {
     await signOut();
   };
+  
+  // ANIMACIÓN: Variantes para el menú móvil y sus ítems
+  const mobileMenuVariants = {
+    open: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 300, damping: 24, staggerChildren: 0.07, delayChildren: 0.2 },
+    },
+    closed: {
+      opacity: 0,
+      y: -20,
+      transition: { duration: 0.2 },
+    },
+  };
 
-  // No mostrar nada si está cargando o si el usuario no existe (el layout debería redirigir)
+  const mobileMenuItemVariants = {
+    open: { opacity: 1, x: 0 },
+    closed: { opacity: 0, x: -20 },
+  };
+
   if (isLoading || !user) {
     return null;
   }
 
   return (
-    // Fondo del Navbar: Azul muy oscuro. Texto base: Casi blanco azulado (para el logo).
-    <nav className="bg-[#002266] text-[#F7FAFC] shadow-md">
+    <nav className="bg-[#002266] text-[#F7FAFC] shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link href="/admin/dashboard" legacyBehavior>
-              {/* Título/Logo: Texto casi blanco azulado, hover azul muy pálido */}
-              <a className="font-bold text-xl hover:text-[#EBF4FF] transition-colors duration-150">
-                Temuco Admin
-              </a>
+            <Link href="/admin/dashboard" className="font-bold text-xl hover:text-[#EBF4FF] transition-colors duration-150">
+              Temuco Admin
             </Link>
-            {/* Navegación Desktop */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 {navItems.map((item) => (
-                  <Link key={item.name} href={item.href} legacyBehavior>
-                    <a
-                      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150
-                        ${pathname === item.href
-                          // Activo: Fondo azul oscuro principal, texto casi blanco azulado
-                          ? 'bg-[#002A7F] text-[#F7FAFC]'
-                          // Inactivo: Texto azul muy pálido, hover con fondo azul oscuro principal y texto casi blanco
-                          : 'text-[#EBF4FF] hover:bg-[#002A7F] hover:text-[#F7FAFC]'
-                        }`}
-                      onClick={() => setIsMobileMenuOpen(false)} // Cerrar menú móvil al hacer clic
-                    >
-                      {item.name}
-                    </a>
-                  </Link>
+                  // ANIMACIÓN: Hover sutil en los links de escritorio
+                  <motion.a
+                    key={item.name}
+                    href={item.href}
+                    className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150
+                      ${pathname === item.href ? 'text-white' : 'text-[#EBF4FF] hover:text-white'}`}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ y: 0 }}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {item.name}
+                    {pathname === item.href && (
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C8102E]"
+                        layoutId="underline"
+                      />
+                    )}
+                  </motion.a>
                 ))}
               </div>
             </div>
           </div>
-          {/* Sección derecha del Navbar (Desktop) */}
           <div className="hidden md:block">
             <div className="ml-4 flex items-center md:ml-6">
               {user?.email && (
-                // Texto de bienvenida: Azul muy pálido
                 <span className="text-sm text-[#EBF4FF] mr-3">
-                  Hola, {user.email.split('@')[0]} {/* Mostrar solo la parte antes del @ */}
+                  Hola, {user.email.split('@')[0]}
                 </span>
               )}
-              {/* Botón Cerrar Sesión: Fondo rojo, hover rojo más oscuro, texto casi blanco */}
-              <button
+              {/* ANIMACIÓN: Botón con feedback visual en hover y tap */}
+              <motion.button
                 onClick={handleSignOut}
-                className="bg-[#C8102E] hover:brightness-90 text-[#F7FAFC] px-3 py-2 rounded-md text-sm font-medium transition-all duration-150"
+                className="bg-[#C8102E] text-[#F7FAFC] px-3 py-2 rounded-md text-sm font-medium"
+                whileHover={{ scale: 1.05, filter: 'brightness(1.1)' }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
               >
                 Cerrar Sesión
-              </button>
+              </motion.button>
             </div>
           </div>
-          {/* Botón de Menú Móvil */}
           <div className="-mr-2 flex md:hidden">
+            {/* ANIMACIÓN: Transición entre ícono de hamburguesa y 'X' */}
             <button
               type="button"
-              // Fondo base heredado. Icono azul muy pálido. Hover: fondo azul oscuro, icono casi blanco. Focus: ring blanco.
-              className="bg-inherit inline-flex items-center justify-center p-2 rounded-md text-[#EBF4FF] hover:text-[#F7FAFC] hover:bg-[#002A7F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#002266] focus:ring-white transition-colors duration-150"
+              className="relative h-10 w-10 inline-flex items-center justify-center p-2 rounded-md text-[#EBF4FF] hover:text-white focus:outline-none"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-expanded={isMobileMenuOpen}
             >
-              <span className="sr-only">Abrir menú principal</span>
-              {isMobileMenuOpen ? (
-                // Icono de 'X'
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                // Icono de hamburguesa
-                <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={isMobileMenuOpen ? 'close' : 'menu'}
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute"
+                >
+                  {isMobileMenuOpen ? <IoClose size={28} /> : <IoMenu size={28} />}
+                </motion.div>
+              </AnimatePresence>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Menú Móvil Desplegable */}
-      {isMobileMenuOpen && (
-        // Fondo igual al navbar. Sombra para destacar sobre el contenido.
-        <div className="md:hidden bg-[#002266] shadow-lg absolute top-16 inset-x-0 z-50" id="mobile-menu">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <Link key={`mobile-${item.name}`} href={item.href} legacyBehavior>
-                <a
+      {/* ANIMACIÓN: Menú móvil con entrada/salida y cascada */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            className="md:hidden bg-[#002266] shadow-lg absolute top-16 inset-x-0 z-40"
+            variants={mobileMenuVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+          >
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {navItems.map((item) => (
+                <motion.a
+                  key={`mobile-${item.name}`}
+                  href={item.href}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-colors duration-150
-                    ${pathname === item.href
-                      ? 'bg-[#002A7F] text-[#F7FAFC]'
-                      : 'text-[#EBF4FF] hover:bg-[#002A7F] hover:text-[#F7FAFC]'
-                    }`}
-                   onClick={() => setIsMobileMenuOpen(false)} // Cerrar menú al hacer clic
+                    ${pathname === item.href ? 'bg-[#002A7F] text-[#F7FAFC]' : 'text-[#EBF4FF] hover:bg-[#002A7F] hover:text-[#F7FAFC]'}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  variants={mobileMenuItemVariants}
                 >
                   {item.name}
-                </a>
-              </Link>
-            ))}
-             {/* Usuario y botón de cerrar sesión en móvil */}
-            <div className="pt-4 pb-3 border-t border-[#002A7F]"> {/* Borde con azul oscuro principal */}
+                </motion.a>
+              ))}
+              <motion.div variants={mobileMenuItemVariants} className="pt-4 pb-3 border-t border-[#002A7F]">
                 {user?.email && (
-                    <div className="flex items-center px-3 mb-3">
-                        <p className="text-base font-medium text-[#F7FAFC]">
-                            Hola, {user.email.split('@')[0]}
-                        </p>
-                    </div>
+                  <div className="flex items-center px-3 mb-3">
+                    <p className="text-base font-medium text-[#F7FAFC]">Hola, {user.email.split('@')[0]}</p>
+                  </div>
                 )}
                 <button
-                    onClick={handleSignOut}
-                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-[#EBF4FF] hover:bg-[#002A7F] hover:text-[#F7FAFC] transition-colors duration-150"
+                  onClick={handleSignOut}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-[#EBF4FF] hover:bg-[#002A7F] hover:text-[#F7FAFC]"
                 >
-                    Cerrar Sesión
+                  Cerrar Sesión
                 </button>
+              </motion.div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

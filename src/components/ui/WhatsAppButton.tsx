@@ -1,6 +1,7 @@
 // src/components/ui/WhatsAppButton.tsx
 "use client"; // Puede ser client si necesitas lógica extra, o server si solo genera enlace
 
+import { motion } from 'framer-motion';
 import { FaWhatsapp } from 'react-icons/fa';
 
 interface WhatsAppButtonProps {
@@ -26,17 +27,29 @@ const WhatsAppButton = ({
   const finalMessage = message || defaultMessage;
   const whatsappLink = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(finalMessage)}`;
 
-  return (
-    <a
+ return (
+    // ANIMACIÓN: El botón ahora es un motion.a con una animación de pulso y hover
+    <motion.a
       href={whatsappLink}
       target="_blank"
       rel="noopener noreferrer"
-      className={className}
+      className="inline-flex items-center justify-center px-6 py-3 font-bold text-white bg-[#C8102E] rounded-lg shadow-lg"
+      whileHover={{ scale: 1.05, boxShadow: "0px 10px 20px rgba(200, 16, 46, 0.3)" }}
+      whileTap={{ scale: 0.95 }}
+      // Animación de pulso sutil para atraer la atención
+      animate={{ scale: [1, 1.02, 1] }}
+      transition={{ 
+          duration: 1.5, 
+          repeat: Infinity, 
+          repeatType: 'loop', 
+          ease: 'easeInOut' 
+      }}
     >
-      <FaWhatsapp size={22} className="mr-2" />
+      <FaWhatsapp className="mr-3 h-6 w-6" />
       {buttonText}
-    </a>
+    </motion.a>
   );
 };
+
 
 export default WhatsAppButton;

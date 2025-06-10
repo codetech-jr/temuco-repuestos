@@ -17,7 +17,7 @@ const testimonialsData: Testimonial[] = [
     authorName: 'Carmen Rodríguez',
     authorDetail: 'Cliente desde 2019',
     rating: 5,
-    avatarUrl: '/img/avatar-female-1.png', // Cambiar a nombres de archivo más descriptivos si es posible
+    avatarUrl: '/img/testimonials/avatar1.png', // Cambiar a nombres de archivo más descriptivos si es posible
   },
   {
     id: 'testimonial2',

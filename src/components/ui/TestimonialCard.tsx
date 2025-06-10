@@ -1,65 +1,91 @@
-// src/components/ui/TestimonialCard.tsx
-import RatingStars from './RatingStars';
-import Image from 'next/image';
+// En src/components/ui/TestimonialCard.tsx
+"use client";
 
-// La interfaz Testimonial se define aquí mismo para claridad en este ejemplo,
-// pero es bueno tenerla en un archivo centralizado de tipos si se usa en múltiples lugares.
+import { motion, Variants } from 'framer-motion';
+import Image from 'next/image';
+import { FaStar, FaRegStar, FaQuoteLeft } from 'react-icons/fa';
+
 export interface Testimonial {
   id: string;
   quote: string;
   authorName: string;
-  authorDetail?: string;
+  authorDetail: string;
   rating: number;
-  avatarUrl?: string;
+  avatarUrl: string;
+  variants?: Variants;
 }
 
-interface TestimonialCardProps {
-  testimonial: Testimonial;
-  isSlider?: boolean;
-}
+const RatingStars: React.FC<{ rating: number }> = ({ rating }) => (
+  <div className="flex text-yellow-400 mb-4">
+    {[...Array(5)].map((_, i) => (
+      i < rating ? <FaStar key={i} /> : <FaRegStar key={i} />
+    ))}
+  </div>
+);
 
-const TestimonialCard = ({ testimonial, isSlider = false }: TestimonialCardProps) => {
+const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => {
+  const innerContainerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120 } },
+  };
+
   return (
-    // Fondo de tarjeta: Casi blanco azulado
-    <div className={`bg-[#F7FAFC] rounded-xl shadow-lg p-6 md:p-8 flex flex-col ${isSlider ? 'h-full' : 'h-full'}`}>
-      {/* En modo slider, Swiper suele manejar bien la altura, 'h-full' ayuda a que la card se estire si es necesario */}
-      {/* Si no está en slider, h-full permite que las tarjetas en un grid tengan la misma altura. */}
-      <div className="mb-4">
-        {/* RatingStars: Estrellas activas con naranja/marrón, inactivas con azul muy pálido */}
-        <RatingStars
-          rating={testimonial.rating}
-          activeColor="text-[#DD6B20]" // Naranja/Marrón para estrellas activas
-          inactiveColor="text-[#EBF4FF]" // Azul muy pálido para estrellas inactivas
-          starSize="w-5 h-5"
-        />
-      </div>
-      {/* Cita: Texto gris oscuro azulado */}
-      <blockquote className="text-[#2D3748] italic mb-6 flex-grow text-sm md:text-base leading-relaxed">
-        <p>“{testimonial.quote}”</p>
-      </blockquote>
-      {/* Borde separador: Azul muy pálido */}
-      <div className="mt-auto pt-4 border-t border-[#EBF4FF] flex items-center">
-        {testimonial.avatarUrl && (
-          <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden mr-4 flex-shrink-0">
-            <Image
-              src={testimonial.avatarUrl}
-              alt={`Avatar de ${testimonial.authorName}`}
-              fill // Usar fill en lugar de layout="fill"
-              objectFit="cover"
-              sizes="(max-width: 768px) 48px, 56px" // Tamaños para optimización de imagen
-            />
+    <motion.div
+      variants={testimonial.variants}
+      className="bg-[#F7FAFC] text-gray-800 rounded-lg shadow-xl p-6 md:p-8 flex flex-col h-full relative overflow-hidden"
+      whileHover={{ y: -8, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)" }}
+      transition={{ type: 'spring', stiffness: 300 }}
+    >
+      <motion.div
+        className="absolute top-4 right-4 text-7xl text-[#002A7F]/10 z-0"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        <FaQuoteLeft />
+      </motion.div>
+      
+      <motion.div 
+        className="flex flex-col h-full z-10"
+        variants={innerContainerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants}>
+          <RatingStars rating={testimonial.rating} />
+        </motion.div>
+        
+        <motion.p variants={itemVariants} className="text-gray-600 mb-6 flex-grow italic">
+          "{testimonial.quote}"
+        </motion.p>
+        
+        {/* --- SECCIÓN CORREGIDA --- */}
+        <motion.div variants={itemVariants} className="flex items-center mt-auto pt-4 border-t border-gray-200">
+          {/* El componente Image ahora tiene las clases de estilo directamente */}
+          <Image
+            src={testimonial.avatarUrl}
+            alt={testimonial.authorName}
+            width={56} // Usamos width y height para un mejor control y evitar layout shifts
+            height={56}
+            className="rounded-full object-cover mr-4" // Clases para darle forma y margen
+            priority
+          />
+          <div>
+            <h4 className="font-bold text-[#002A7F]">{testimonial.authorName}</h4>
+            <p className="text-sm text-gray-500">{testimonial.authorDetail}</p>
           </div>
-        )}
-        <div>
-          {/* Nombre del autor: Azul oscuro principal */}
-          <p className="font-semibold text-[#002A7F] text-base">{testimonial.authorName}</p>
-          {/* Detalle del autor: Gris medio */}
-          {testimonial.authorDetail && (
-            <p className="text-xs text-[#718096]">{testimonial.authorDetail}</p>
-          )}
-        </div>
-      </div>
-    </div>
+        </motion.div>
+        {/* --- FIN DE LA SECCIÓN CORREGIDA --- */}
+      </motion.div>
+    </motion.div>
   );
 };
 

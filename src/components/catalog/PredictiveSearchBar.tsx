@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -7,6 +7,8 @@ import Image from 'next/image';
 import { useDebouncedCallback } from 'use-debounce';
 import { IoSearch, IoClose } from 'react-icons/io5';
 import apiClient from '@/app/api/axiosClient';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PulseLoader } from 'react-spinners';
 
 interface Suggestion {
   id: string;
@@ -19,12 +21,12 @@ interface Suggestion {
 
 interface PredictiveSearchBarProps {
   placeholder?: string;
+  onSearch?: () => void;
 }
 
-const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: PredictiveSearchBarProps) => {
+const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: PredictiveSearchBarProps) => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  // --- NUEVO ESTADO PARA LA CORRECCIÓN ORTOGRÁFICA ---
   const [correction, setCorrection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -32,11 +34,10 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
   const router = useRouter();
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // --- LÓGICA DE BÚSQUEDA ACTUALIZADA ---
   const fetchSuggestions = useDebouncedCallback(async (searchTerm: string) => {
-    setCorrection(null); // Reseteamos la corrección en cada nueva búsqueda
+    setCorrection(null);
 
-    if (searchTerm.length < 3) { // La corrección funciona mejor con 3+ caracteres
+    if (searchTerm.length < 3) {
       setSuggestions([]);
       setIsLoading(false);
       setIsDropdownOpen(searchTerm.length >= 3);
@@ -44,18 +45,14 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
     }
 
     try {
-      // 1. Buscamos sugerencias de autocompletado
       const { data: suggestionData } = await apiClient.get<Suggestion[]>(`/search/suggestions?q=${searchTerm}`);
       
       if (suggestionData.length > 0) {
-        // Si hay resultados, los mostramos
         setSuggestions(suggestionData);
       } else {
-        // 2. Si NO hay resultados, buscamos una corrección
-        setSuggestions([]); // Aseguramos que las sugerencias estén vacías
+        setSuggestions([]);
         try {
           const { data: spellcheckData } = await apiClient.get<{ suggestion: string | null }>(`/search/spellcheck?q=${searchTerm}`);
-          // Solo mostramos la corrección si es diferente a lo que el usuario escribió
           if (spellcheckData.suggestion && spellcheckData.suggestion.toLowerCase() !== searchTerm.toLowerCase()) {
             setCorrection(spellcheckData.suggestion);
           }
@@ -71,7 +68,7 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
     } finally {
       setIsLoading(false);
     }
-  }, 350); // Aumentamos un poco el debounce para dar tiempo a la posible segunda llamada
+  }, 350);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -80,7 +77,7 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
       setSuggestions([]);
       setIsLoading(false);
       setIsDropdownOpen(false);
-      setCorrection(null); // Limpiar corrección
+      setCorrection(null);
       return;
     }
     setIsLoading(true);
@@ -95,6 +92,7 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
       setIsDropdownOpen(false);
       setSuggestions([]);
       setCorrection(null);
+      if (onSearch) onSearch();
     }
   };
 
@@ -116,8 +114,23 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const dropdownVariants = {
+    open: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } },
+    closed: { opacity: 0, y: -10, transition: { duration: 0.2 } },
+  };
+
+  const listVariants = {
+    visible: { transition: { staggerChildren: 0.05 } },
+    hidden: {},
+  };
+
+  const listItemVariants = {
+    visible: { opacity: 1, x: 0 },
+    hidden: { opacity: 0, x: -10 },
+  };
+
   const inputBaseClasses = "w-full px-4 py-2 border rounded-l-md sm:text-sm bg-white transition-colors duration-150";
-  const inputColorClasses = "border-[#718096] placeholder-gray-400 text-[#2D3748]";
+  const inputColorClasses = "border-gray-300 placeholder-gray-400 text-gray-800";
   const inputFocusClasses = "focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F]";
 
   return (
@@ -134,75 +147,102 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos..." }: Predictive
             autoComplete="off"
           />
           {query && (
-            <button
+            <motion.button
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#718096] hover:text-[#2D3748] transition-colors duration-150"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-700"
+              whileHover={{ scale: 1.2, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
               aria-label="Limpiar búsqueda"
             >
               <IoClose size={20} />
-            </button>
+            </motion.button>
           )}
         </div>
-        <button
+        <motion.button
           type="submit"
-          className="bg-[#002A7F] text-white px-3 py-[9px] sm:px-4 rounded-r-md hover:bg-[#002266] transition-colors duration-300"
+          className="bg-[#002A7F] text-white px-3 py-[9px] sm:px-4 rounded-r-md hover:bg-[#002266]"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
           aria-label="Buscar"
         >
           <IoSearch size={22} />
-        </button>
+        </motion.button>
       </form>
 
-      {/* --- LÓGICA DEL DROPDOWN ACTUALIZADA --- */}
-      {isDropdownOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 w-full bg-white border border-[#EBF4FF] rounded-md shadow-lg z-50">
-          {isLoading ? (
-            <div className="p-4 text-center text-[#718096]">Buscando...</div>
-          ) : suggestions.length > 0 ? (
-            <ul className="max-h-80 overflow-y-auto divide-y divide-[#EBF4FF]">
-              {suggestions.map((s) => (
-                <li key={s.id}>
-                  <Link
-                    href={s.link}
-                    onClick={() => {
-                        setIsDropdownOpen(false);
-                        setQuery(s.name);
-                        setSuggestions([]);
-                    }}
-                    className="flex items-center p-3 hover:bg-[#EBF4FF] transition-colors duration-150"
+      <AnimatePresence>
+        {isDropdownOpen && (
+          <motion.div
+            variants={dropdownVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+            className="absolute top-full left-0 right-0 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden"
+          >
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 text-center text-gray-500 flex items-center justify-center">
+                  <PulseLoader size={8} color="#9ca3af" />
+                  <span className="ml-2">Buscando...</span>
+                </motion.div>
+              ) : suggestions.length > 0 ? (
+                <motion.ul 
+                  key="suggestions" 
+                  initial="hidden"
+                  animate="visible"
+                  variants={listVariants}
+                  className="max-h-80 overflow-y-auto divide-y divide-gray-100"
+                >
+                  {suggestions.map((s) => (
+                    <motion.li key={s.id} variants={listItemVariants}>
+                      <Link
+                        href={s.link}
+                        onClick={() => {
+                            setIsDropdownOpen(false);
+                            setQuery(s.name);
+                            setSuggestions([]);
+                            if (onSearch) onSearch();
+                        }}
+                        className="flex items-center p-3 hover:bg-gray-50 transition-colors duration-150"
+                      >
+                        <Image 
+                          src={s.image_url || '/images/placeholder-product.png'}
+                          alt={s.name} 
+                          width={40} 
+                          height={40}
+                          className="w-10 h-10 object-cover rounded-md mr-3 flex-shrink-0 bg-gray-100"
+                          priority
+                        />
+                        <div className="flex-grow min-w-0">
+                          <span className="font-semibold text-gray-800 block truncate">{s.name}</span>
+                          <span className="block text-xs text-gray-500 capitalize">{s.type}</span>
+                        </div>
+                      </Link>
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              ) : correction ? (
+                <motion.div key="correction" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 text-sm text-gray-600">
+                  Quizás quisiste decir:{" "}
+                  <Link 
+                    href={`/search?q=${encodeURIComponent(correction)}`} 
+                    onClick={() => { setIsDropdownOpen(false); if (onSearch) onSearch(); }}
+                    className="font-semibold text-[#002A7F] hover:underline"
                   >
-                    <Image 
-                      src={s.image_url || '/images/placeholder/product-placeholder.png'}
-                      alt={s.name} 
-                      width={40} 
-                      height={40}
-                      className="w-10 h-10 object-cover rounded-md mr-3 flex-shrink-0 bg-[#EBF4FF]"
-                    />
-                    <div className="flex-grow min-w-0">
-                      <span className="font-semibold text-[#2D3748] block truncate">{s.name}</span>
-                      <span className="block text-xs text-[#718096] capitalize">{s.type}</span>
-                    </div>
+                    {correction}
                   </Link>
-                </li>
-              ))}
-            </ul>
-          // --- NUEVO BLOQUE PARA LA CORRECCIÓN ---
-          ) : correction ? (
-            <div className="p-4 text-sm text-[#718096]">
-              Quizás quisiste decir:{" "}
-              <Link 
-                href={`/search?q=${encodeURIComponent(correction)}`} 
-                onClick={() => setIsDropdownOpen(false)}
-                className="font-semibold text-[#002A7F] hover:underline"
-              >
-                {correction}
-              </Link>
-            </div>
-          ) : query.length >= 3 ? (
-            <div className="p-4 text-center text-[#718096]">No se encontraron sugerencias.</div>
-          ) : null }
-        </div>
-      )}
+                </motion.div>
+              ) : query.length >= 3 ? (
+                <motion.div key="no-suggestions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 text-center text-gray-500">
+                  No se encontraron sugerencias.
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

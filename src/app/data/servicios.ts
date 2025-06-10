@@ -24,7 +24,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>Entendemos la importancia de tus electrodomésticos en tu día a día, por eso nos esforzamos en ofrecer un servicio rápido y confiable.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">¿Por qué elegir nuestro servicio técnico?</h3>
     `, // Puedes usar HTML simple aquí. Para Markdown, necesitarías un parser.
-    imageUrl: '/img/servicio-tecnico.jpg', // Necesitarás estas imágenes
+    imageUrl: '/img/services/servicio-tecnico.jpg', // Necesitarás estas imágenes
     benefits: [
       "Diagnóstico preciso y rápido.",
       "Técnicos certificados y con experiencia.",
@@ -51,7 +51,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>Asegura el óptimo funcionamiento y la validez de la garantía de tus equipos con nuestro servicio de instalación profesional. Realizamos la instalación de aires acondicionados (split, ventana, centrales), campanas de cocina, hornos empotrables y más, siguiendo estrictamente las especificaciones del fabricante.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">Nuestros servicios de instalación incluyen:</h3>
     `,
-    imageUrl: '/img/hero-bg3.jpg',
+    imageUrl: '/img/services/hero-bg3.jpg',
     benefits: [
       "Cumplimiento de normativas y estándares del fabricante.",
       "Personal calificado y herramientas adecuadas.",
@@ -70,7 +70,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>El mantenimiento regular es clave para asegurar la eficiencia y durabilidad de tus electrodomésticos y sistemas de climatización. Ofrecemos planes de mantenimiento preventivo adaptados a tus necesidades, así como servicios de mantenimiento correctivo para solucionar problemas existentes.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">Beneficios del mantenimiento:</h3>
     `,
-    imageUrl: '/img/mantenimiento-preventivo.jpg',
+    imageUrl: '/img/services/mantenimiento-preventivo.jpg',
     benefits: [
       "Prevención de averías mayores.",
       "Optimización del consumo energético.",
@@ -89,7 +89,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>Si tu electrodoméstico adquirido con nosotros o de una marca asociada presenta fallas dentro del período de garantía, te asistimos en el proceso de gestión con el fabricante. Actuamos como servicio técnico autorizado para diversas marcas, facilitando el diagnóstico y la reparación cubierta por la garantía.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">¿Cómo funciona?</h3>
     `,
-    imageUrl: '/img/gestion-garantia.jpg',
+    imageUrl: '/img/services/gestion-garantia.jpg',
     process: [
         { step: "Verificación", description: "Revisamos la documentación y el estado del equipo." },
         { step: "Diagnóstico Técnico", description: "Determinamos si la falla está cubierta por la garantía." },
@@ -108,7 +108,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>¿Tienes dudas sobre qué equipo comprar? ¿Necesitas optimizar el uso de tus electrodomésticos para ahorrar energía? Nuestro equipo de expertos te ofrece asesoría técnica personalizada para ayudarte a tomar las mejores decisiones, ya sea para tu hogar o negocio.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">Podemos asesorarte en:</h3>
     `,
-    imageUrl: '/img/asesoria.jpg',
+    imageUrl: '/img/services/asesoria.jpg',
     benefits: [
       "Selección de equipos según tus necesidades y presupuesto.",
       "Optimización del rendimiento y consumo energético.",
@@ -134,7 +134,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       </ol>
       <p>También ofrecemos opciones de envío a otras regiones a través de servicios de courier (Starken, Chilexpress, etc.). ¡Consúltanos!</p>
     `,
-    imageUrl: '/img/delivery.jpg', // Necesitarás esta imagen
+    imageUrl: '/img/services/delivery.jpg', // Necesitarás esta imagen
     benefits: [
       "Comodidad: Ahorra tiempo y evita traslados innecesarios.",
       "Rapidez: Entregas eficientes en el radio urbano.",

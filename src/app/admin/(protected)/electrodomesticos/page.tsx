@@ -1,4 +1,3 @@
-// src/app/admin/electrodomesticos/page.tsx
 "use client";
 
 import Link from 'next/link';
@@ -7,8 +6,8 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import supabase from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
-
-// ... (interfaces y funciones API como antes) ...
+import { motion, AnimatePresence } from 'framer-motion';
+import FadeIn from '@/components/utils/FadeIn';
 
 export interface ElectrodomesticoListItem {
   id: string;
@@ -38,17 +37,19 @@ async function fetchAdminElectrodomesticosFromAPI(
   if (categoryFilter) queryParams.append('category', categoryFilter);
   if (brandFilter) queryParams.append('brand', brandFilter);
   if (statusFilter) queryParams.append('is_active', statusFilter);
-
   const endpoint = `${API_BASE_URL}/electrodomesticos?${queryParams.toString()}`;
   try {
     const res = await fetch(endpoint, { cache: 'no-store' });
     if (!res.ok) {
-      let errorDetail = `Error: ${res.status}`; try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch(e){}
+      let errorDetail = `Error: ${res.status}`;
+      try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (e) {}
       return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: errorDetail };
     }
     const d = await res.json();
     return { data: d.data || [], totalItems: d.totalItems || 0, totalPages: d.totalPages || 0, currentPage: d.currentPage || page, error: null };
-  } catch (e: any) { return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: e.message || "Error de red" }; }
+  } catch (e: any) {
+    return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: e.message || "Error de red" };
+  }
 }
 
 async function deleteElectrodomesticoFromAPI(id: string): Promise<{ success: boolean, error: string | null }> {
@@ -57,11 +58,13 @@ async function deleteElectrodomesticoFromAPI(id: string): Promise<{ success: boo
   try {
     const res = await fetch(`${API_BASE_URL}/electrodomesticos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
     if (res.ok) return { success: true, error: null };
-    let errorDetail = `Error: ${res.status}`; try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch(e){}
+    let errorDetail = `Error: ${res.status}`;
+    try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (e) {}
     return { success: false, error: errorDetail };
-  } catch (e: any) { return { success: false, error: e.message || "Excepción" }; }
+  } catch (e: any) {
+    return { success: false, error: e.message || "Excepción" };
+  }
 }
-
 
 export default function AdminElectrodomesticosPage() {
   const [electrodomesticos, setElectrodomesticos] = useState<ElectrodomesticoListItem[]>([]);
@@ -77,18 +80,17 @@ export default function AdminElectrodomesticosPage() {
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [brandOptions, setBrandOptions] = useState<string[]>([]);
 
-  // Clases de Tailwind reutilizables con tu paleta
   const primaryButtonClasses = "bg-[#002A7F] hover:bg-[#002266] text-white font-semibold py-2 px-4 rounded-lg shadow-sm transition-colors duration-150";
   const secondaryButtonClasses = "bg-white hover:bg-[#EBF4FF] text-[#002A7F] font-semibold py-2 px-3 border border-[#002A7F] rounded-lg shadow-sm hover:text-[#002266] transition-colors duration-150";
   const inputFormClasses = "block w-full mt-1 px-3 py-2 border border-[#718096] rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#002A7F] focus:border-[#002A7F] sm:text-sm text-[#2D3748] bg-white";
   const labelFormClasses = "block text-sm font-medium text-[#2D3748] mb-0.5";
   const thAdminClasses = "px-4 sm:px-6 py-3 text-left text-xs font-medium text-[#718096] uppercase tracking-wider";
-  const tdAdminClasses = "px-4 sm:px-6 py-3 whitespace-nowrap text-sm text-[#718096]"; // Color base para celdas (texto secundario)
+  const tdAdminClasses = "px-4 sm:px-6 py-3 whitespace-nowrap text-sm text-[#718096]";
   const statusBadgeBase = "px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full";
-  const statusActiveClasses = `${statusBadgeBase} bg-[#EBF4FF] text-[#002A7F]`; // Azul muy pálido fondo, texto azul oscuro
-  const statusInactiveClasses = `${statusBadgeBase} bg-[#FEE2E2] text-[#C8102E]`; // Rojo muy pálido fondo, texto rojo
+  const statusActiveClasses = `${statusBadgeBase} bg-[#EBF4FF] text-[#002A7F]`;
+  const statusInactiveClasses = `${statusBadgeBase} bg-[#FEE2E2] text-[#C8102E]`;
   const linkEditClasses = "text-[#002A7F] hover:text-[#002266] hover:underline";
-  const linkDeleteClasses = "text-[#C8102E] hover:text-red-700 hover:underline"; // Usando un rojo más oscuro de Tailwind para hover
+  const linkDeleteClasses = "text-[#C8102E] hover:text-red-700 hover:underline";
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -97,21 +99,27 @@ export default function AdminElectrodomesticosPage() {
           fetch(`${API_BASE_URL}/electrodomesticos/config/categories`),
           fetch(`${API_BASE_URL}/electrodomesticos/config/brands`)
         ]);
-        if (catRes.ok) { const data = await catRes.json(); if(Array.isArray(data)) setCategoryOptions(data); }
-        if (brandRes.ok) { const data = await brandRes.json(); if(Array.isArray(data)) setBrandOptions(data); }
-      } catch (e) { console.error("Error fetching filter options:", e); toast.error("Error cargando opciones de filtro."); }
+        if (catRes.ok) { const data = await catRes.json(); if (Array.isArray(data)) setCategoryOptions(data); }
+        if (brandRes.ok) { const data = await brandRes.json(); if (Array.isArray(data)) setBrandOptions(data); }
+      } catch (e) { toast.error("Error cargando opciones de filtro."); }
     };
     fetchOptions();
   }, []);
 
   const loadElectrodomesticos = useCallback(async (pageToLoad: number) => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     const result = await fetchAdminElectrodomesticosFromAPI(pageToLoad, ITEMS_PER_PAGE, searchTerm, selectedCategory, selectedBrand, selectedStatus);
     if (result.error) {
-      setError(result.error); setElectrodomesticos([]); setTotalItems(0); setTotalPages(0);
+      setError(result.error);
+      setElectrodomesticos([]);
+      setTotalItems(0);
+      setTotalPages(0);
     } else {
-      setElectrodomesticos(result.data); setTotalItems(result.totalItems);
-      setTotalPages(result.totalPages); setCurrentPage(result.currentPage);
+      setElectrodomesticos(result.data);
+      setTotalItems(result.totalItems);
+      setTotalPages(result.totalPages);
+      setCurrentPage(result.currentPage);
     }
     setLoading(false);
   }, [searchTerm, selectedCategory, selectedBrand, selectedStatus]);
@@ -124,27 +132,35 @@ export default function AdminElectrodomesticosPage() {
     if (currentPage !== 1) setCurrentPage(1);
     else loadElectrodomesticos(1);
   };
-  
+
   const clearFiltersAndReload = () => {
-    setSearchTerm(''); setSelectedCategory(''); setSelectedBrand(''); setSelectedStatus('');
+    setSearchTerm('');
+    setSelectedCategory('');
+    setSelectedBrand('');
+    setSelectedStatus('');
     if (currentPage !== 1) setCurrentPage(1);
     else loadElectrodomesticos(1);
   };
-
-  const handleDelete = async (id: string, name: string) => {
+  
+  const handleDeleteWithOptimisticUI = async (id: string, name: string) => {
     if (window.confirm(`¿Eliminar "${name}"?`)) {
+      const originalProducts = [...electrodomesticos];
+      setElectrodomesticos(prev => prev.filter(p => p.id !== id));
       const toastId = toast.loading("Eliminando...");
       const result = await deleteElectrodomesticoFromAPI(id);
       toast.dismiss(toastId);
       if (result.success) {
         toast.success("Eliminado exitosamente.");
-        if (electrodomesticos.length === 1 && currentPage > 1) setCurrentPage(prev => prev - 1);
-        else loadElectrodomesticos(currentPage);
+        if (originalProducts.length === 1 && currentPage > 1) {
+            setCurrentPage(prev => prev -1);
+        }
       } else {
         toast.error(result.error || "Error al eliminar.");
+        setElectrodomesticos(originalProducts);
       }
     }
   };
+
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage && !loading) {
@@ -154,63 +170,74 @@ export default function AdminElectrodomesticosPage() {
 
   const renderPaginationControls = () => {
     if (totalPages <= 1) return null;
-    const pageNumbers = []; const maxPagesToShow = 5;
+    const pageNumbers = [];
+    const maxPagesToShow = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
     let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-    if (totalPages >= maxPagesToShow && endPage - startPage + 1 < maxPagesToShow) startPage = Math.max(1, endPage - maxPagesToShow + 1);
-    else if (totalPages < maxPagesToShow) { startPage = 1; endPage = totalPages; }
+    if (totalPages >= maxPagesToShow && endPage - startPage + 1 < maxPagesToShow) {
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    } else if (totalPages < maxPagesToShow) {
+      startPage = 1;
+      endPage = totalPages;
+    }
     for (let i = startPage; i <= endPage; i++) pageNumbers.push(i);
-    
     const baseBtn = "px-3 py-1.5 text-sm font-medium border rounded-md disabled:opacity-60 disabled:cursor-not-allowed transition-colors duration-150";
     const activeBtn = `bg-[#002A7F] text-[#F7FAFC] border-[#002A7F]`;
     const inactiveBtn = `bg-white text-[#002A7F] border-[#718096] hover:bg-[#EBF4FF] hover:text-[#002266] hover:border-[#002A7F]`;
     const ellipsisClass = "px-1 sm:px-2 py-1.5 text-sm text-[#718096]";
-
     return (
-      <div className="mt-6 flex flex-wrap justify-center items-center space-x-1"> {/* flex-wrap para móviles */}
+      <div className="mt-6 flex flex-wrap justify-center items-center space-x-1">
         <button onClick={() => handlePageChange(1)} disabled={currentPage === 1 || loading} className={`${baseBtn} ${inactiveBtn}`}>{"<<"}</button>
         <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1 || loading} className={`${baseBtn} ${inactiveBtn}`}>{"<"}</button>
         {startPage > 1 && (<><button onClick={() => handlePageChange(1)} disabled={loading} className={`${baseBtn} ${inactiveBtn}`}>1</button>{startPage > 2 && <span className={ellipsisClass}>...</span>}</>)}
         {pageNumbers.map(num => (<button key={num} onClick={() => handlePageChange(num)} disabled={loading} className={`${baseBtn} ${currentPage === num ? activeBtn : inactiveBtn}`}>{num}</button>))}
-        {endPage < totalPages && (<>{endPage < totalPages -1 && <span className={ellipsisClass}>...</span>}<button onClick={() => handlePageChange(totalPages)} disabled={loading} className={`${baseBtn} ${inactiveBtn}`}>{totalPages}</button></>)}
+        {endPage < totalPages && (<>{endPage < totalPages - 1 && <span className={ellipsisClass}>...</span>}<button onClick={() => handlePageChange(totalPages)} disabled={loading} className={`${baseBtn} ${inactiveBtn}`}>{totalPages}</button></>)}
         <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages || loading} className={`${baseBtn} ${inactiveBtn}`}>{">"}</button>
         <button onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages || loading} className={`${baseBtn} ${inactiveBtn}`}>{">>"}</button>
       </div>
     );
   };
 
+  const tableContainerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } };
+  const tableRowVariants = { hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 }, exit: { opacity: 0, x: -50, transition: { duration: 0.3 } } };
+
   if (loading && electrodomesticos.length === 0) return (<div className="flex justify-center items-center min-h-[calc(100vh-12rem)] bg-[#F7FAFC]"><LoadingSpinner size={50} /><p className="ml-3 text-[#718096] text-lg">Cargando electrodomésticos...</p></div>);
   if (error && electrodomesticos.length === 0) return (<div className="text-center p-6 bg-[#F7FAFC] min-h-[calc(100vh-12rem)] flex flex-col justify-center items-center"><p className="text-[#C8102E] text-xl font-semibold mb-2">Error al Cargar</p><p className="text-[#C8102E] mb-4">{error}</p><button onClick={() => loadElectrodomesticos(1)} className={primaryButtonClasses}>Reintentar</button></div>);
 
   return (
-    // Asumiendo que el layout de admin ya tiene bg-[#F7FAFC]
     <div className="container mx-auto p-4 sm:p-6 md:p-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F]">Gestión de Electrodomésticos ({totalItems})</h1>
-        <Link href="/admin/electrodomesticos/nuevo" legacyBehavior>
-          <a className={`${primaryButtonClasses} text-sm sm:text-base`}>+ Crear Nuevo</a>
-        </Link>
-      </div>
-
-      {/* Sección de Filtros */}
-      <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-          <div><label htmlFor="searchTerm" className={labelFormClasses}>Buscar por nombre</label><input type="text" id="searchTerm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Nombre, marca..." className={inputFormClasses} /></div>
-          <div><label htmlFor="selectedCategory" className={labelFormClasses}>Categoría</label><select id="selectedCategory" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{categoryOptions.map(c=><option key={c} value={c}>{c}</option>)}</select></div>
-          <div><label htmlFor="selectedBrand" className={labelFormClasses}>Marca</label><select id="selectedBrand" value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{brandOptions.map(b=><option key={b} value={b}>{b}</option>)}</select></div>
-          <div><label htmlFor="selectedStatus" className={labelFormClasses}>Estado</label><select id="selectedStatus" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={inputFormClasses}><option value="">Todos</option><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+      <FadeIn>
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 md:mb-8 gap-4">
+          <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F]">Gestión de Electrodomésticos ({totalItems})</h1>
+          <Link href="/admin/electrodomesticos/nuevo" legacyBehavior>
+            <a className={`${primaryButtonClasses} text-sm sm:text-base`}>+ Crear Nuevo</a>
+          </Link>
         </div>
-        <div className="mt-4 flex flex-wrap justify-end gap-2">
+      </FadeIn>
+      <FadeIn delay={0.1}>
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+            <div><label htmlFor="searchTerm" className={labelFormClasses}>Buscar por nombre</label><input type="text" id="searchTerm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Nombre, marca..." className={inputFormClasses} /></div>
+            <div><label htmlFor="selectedCategory" className={labelFormClasses}>Categoría</label><select id="selectedCategory" value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+            <div><label htmlFor="selectedBrand" className={labelFormClasses}>Marca</label><select id="selectedBrand" value={selectedBrand} onChange={(e) => setSelectedBrand(e.target.value)} className={inputFormClasses}><option value="">Todas</option>{brandOptions.map(b => <option key={b} value={b}>{b}</option>)}</select></div>
+            <div><label htmlFor="selectedStatus" className={labelFormClasses}>Estado</label><select id="selectedStatus" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className={inputFormClasses}><option value="">Todos</option><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-end gap-2">
             <button onClick={clearFiltersAndReload} className={`${secondaryButtonClasses} text-xs sm:text-sm`}>Limpiar Filtros</button>
             <button onClick={handleFilterAction} className={`${primaryButtonClasses} text-xs sm:text-sm`}>Aplicar Filtros</button>
+          </div>
         </div>
-      </div>
-
-      {error && electrodomesticos.length > 0 && <p className={`text-center text-[#C8102E] mb-4 p-3 bg-[#FEE2E2] border border-[#C8102E] rounded-md text-sm`}>{error}</p>}
-      {loading && electrodomesticos.length > 0 && <div className="my-4 flex justify-center items-center"><LoadingSpinner size={24} /> <span className="ml-2 text-[#718096]">Actualizando lista...</span></div>}
-      
-      {electrodomesticos.length === 0 && !loading && !error ? (<p className="text-center text-[#718096] py-12 text-lg">No hay electrodomésticos que coincidan con los filtros aplicados.</p>) : (
-        <>
+      </FadeIn>
+      <AnimatePresence mode="wait">
+        <motion.div key={loading ? "loading" : "content"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+          {loading && electrodomesticos.length > 0 && (<div className="my-4 flex justify-center items-center"><LoadingSpinner size={24} /> <span className="ml-2 text-[#718096]">Actualizando lista...</span></div>)}
+          {error && electrodomesticos.length > 0 && (<p className={`text-center text-[#C8102E] mb-4 p-3 bg-[#FEE2E2] border border-[#C8102E] rounded-md text-sm`}>{error}</p>)}
+        </motion.div>
+      </AnimatePresence>
+      {electrodomesticos.length === 0 && !loading && !error ? (
+        <FadeIn delay={0.2}><p className="text-center text-[#718096] py-12 text-lg">No hay electrodomésticos que coincidan con los filtros aplicados.</p></FadeIn>
+      ) : (
+        <FadeIn delay={0.2}>
           <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
             <table className="min-w-full divide-y divide-[#EBF4FF]">
               <thead className="bg-[#EBF4FF]">
@@ -225,37 +252,35 @@ export default function AdminElectrodomesticosPage() {
                   <th className={thAdminClasses}>Acciones</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-[#EBF4FF]">
-                {electrodomesticos.map((item) => (
-                  <tr key={item.id} className="hover:bg-[#EBF4FF] transition-colors duration-150">
-                    <td className={`${tdAdminClasses} py-2 px-3 sm:px-4`}>
+              <motion.tbody className="bg-white divide-y divide-[#EBF4FF]" variants={tableContainerVariants} initial="hidden" animate="visible">
+                <AnimatePresence>
+                  {electrodomesticos.map((item) => (
+                    <motion.tr key={item.id} variants={tableRowVariants} exit="exit" layout className="hover:bg-[#EBF4FF] transition-colors duration-150">
+                      <td className={`${tdAdminClasses} py-2 px-3 sm:px-4`}>
                         <div className="h-10 w-10 flex-shrink-0">
-                            {item.image_url ? 
-                                <Image src={item.image_url} alt={item.name} width={40} height={40} className="rounded-md object-cover h-full w-full"/> 
-                                : <div className="h-10 w-10 rounded-md bg-[#EBF4FF] text-xs flex items-center justify-center text-[#718096]">N/A</div>
-                            }
+                          {item.image_url ? <Image src={item.image_url} alt={item.name} width={40} height={40} className="rounded-md object-cover h-full w-full" priority /> : <div className="h-10 w-10 rounded-md bg-[#EBF4FF] text-xs flex items-center justify-center text-[#718096]">N/A</div>}
                         </div>
-                    </td>
-                    <td className={`${tdAdminClasses} font-medium text-[#2D3748]`}>{item.name}</td>
-                    <td className={tdAdminClasses}>{item.category}</td>
-                    <td className={tdAdminClasses}>{item.brand}</td>
-                    <td className={`${tdAdminClasses} text-right`}>{new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(item.price)}</td>
-                    <td className={`${tdAdminClasses} text-center`}>{item.stock ?? 'N/A'}</td>
-                    <td className={`${tdAdminClasses} text-center`}>
-                        <span className={item.is_active ? statusActiveClasses : statusInactiveClasses}>
-                            {item.is_active ? 'Activo' : 'Inactivo'}
-                        </span>
-                    </td>
-                    <td className={`${tdAdminClasses} space-x-2 whitespace-nowrap`}>
+                      </td>
+                      <td className={`${tdAdminClasses} font-medium text-[#2D3748]`}>{item.name}</td>
+                      <td className={tdAdminClasses}>{item.category}</td>
+                      <td className={tdAdminClasses}>{item.brand}</td>
+                      <td className={`${tdAdminClasses} text-right`}>{new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(item.price)}</td>
+                      <td className={`${tdAdminClasses} text-center`}>{item.stock ?? 'N/A'}</td>
+                      <td className={`${tdAdminClasses} text-center`}>
+                        <span className={item.is_active ? statusActiveClasses : statusInactiveClasses}>{item.is_active ? 'Activo' : 'Inactivo'}</span>
+                      </td>
+                      <td className={`${tdAdminClasses} space-x-2 whitespace-nowrap`}>
                         <Link href={`/admin/electrodomesticos/editar/${item.id}`} legacyBehavior><a className={linkEditClasses}>Editar</a></Link>
-                        <button onClick={() => handleDelete(item.id, item.name)} className={linkDeleteClasses}>Borrar</button>
-                    </td>
-                  </tr>))}
-              </tbody>
+                        <button onClick={() => handleDeleteWithOptimisticUI(item.id, item.name)} className={linkDeleteClasses}>Borrar</button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </motion.tbody>
             </table>
           </div>
           {renderPaginationControls()}
-        </>
+        </FadeIn>
       )}
     </div>
   );
