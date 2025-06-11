@@ -1,6 +1,6 @@
 // src/app/admin/(protected)/page.tsx
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/client';
 import { redirect } from 'next/navigation';
 
 // ANIMACIÓN: Importamos los componentes de animación
