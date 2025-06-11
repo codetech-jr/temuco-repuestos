@@ -36,9 +36,9 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
     name: apiData.name,
     category: apiData.category,
     brand: apiData.brand,
-    is_active: apiData.is_active === undefined ? true : apiData.is_active,
-    short_description: apiData.short_description || '',
-    long_description: apiData.long_description || '',
+    is_active: apiData.is_active ?? true,
+    short_description: apiData.short_description ?? '',
+    long_description: apiData.long_description ?? '',
     price: String(apiData.price ?? ''),
     original_price: apiData.original_price != null ? String(apiData.original_price) : '',
     stock: apiData.stock != null ? String(apiData.stock) : '',
@@ -46,7 +46,7 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
     specifications: typeof apiData.specifications === 'string'
       ? apiData.specifications
       : (apiData.specifications ? JSON.stringify(apiData.specifications, null, 2) : ''),
-    image_url: apiData.image_url || '',
+    image_url: apiData.image_url ?? '',
     images: Array.isArray(apiData.images) ? apiData.images : (typeof apiData.images === 'string' ? apiData.images.split(',').map(s => s.trim()).filter(Boolean) : undefined),
     created_at: apiData.created_at,
   };
@@ -68,12 +68,6 @@ export default function EditarElectrodomesticoPage({ id }: Props) {
       setError("ID no válido.");
       setLoading(false);
       toast.error("ID no válido.");
-      return;
-    }
-    if (!supabase) {
-      setError("Error de configuración.");
-      setLoading(false);
-      toast.error("Error de config.");
       return;
     }
 
@@ -104,7 +98,6 @@ export default function EditarElectrodomesticoPage({ id }: Props) {
   const handleUpdate = async (data: FormData): Promise<boolean> => {
     setFormSubmitError(null);
     toast.dismiss();
-    if (!supabase) return false;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
       router.push('/admin/login');
