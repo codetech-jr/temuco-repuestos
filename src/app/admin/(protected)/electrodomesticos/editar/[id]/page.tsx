@@ -1,11 +1,6 @@
 import EditarElectrodomesticoPage from './EditarElectrodomesticoPage';
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
-
-export default function Page({ params }: PageProps) {
+export default function Page(props: any) {
+  const { params } = props;
   return <EditarElectrodomesticoPage id={params.id} />;
 }

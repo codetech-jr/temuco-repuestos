@@ -42,12 +42,16 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
     price: String(apiData.price ?? ''),
     original_price: apiData.original_price != null ? String(apiData.original_price) : '',
     stock: apiData.stock != null ? String(apiData.stock) : '',
-    features: Array.isArray(apiData.features) ? apiData.features.join(', ') : (typeof apiData.features === 'string' ? apiData.features : ''),
+    features: Array.isArray(apiData.features) 
+      ? apiData.features.join(', ') 
+      : (typeof apiData.features === 'string' ? apiData.features : ''),
     specifications: typeof apiData.specifications === 'string'
       ? apiData.specifications
       : (apiData.specifications ? JSON.stringify(apiData.specifications, null, 2) : ''),
     image_url: apiData.image_url ?? '',
-    images: Array.isArray(apiData.images) ? apiData.images : (typeof apiData.images === 'string' ? apiData.images.split(',').map(s => s.trim()).filter(Boolean) : undefined),
+    images: Array.isArray(apiData.images) 
+      ? apiData.images.join(', ') 
+      : (typeof apiData.images === 'string' ? apiData.images : ''),
     created_at: apiData.created_at,
   };
 }

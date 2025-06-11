@@ -24,9 +24,16 @@ const itemVariants = {
   },
 };
 
-const StaggeredFadeIn = ({ children }: { children: React.ReactNode }) => {
+// ✅ Definimos las props correctamente
+interface StaggeredFadeInProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const StaggeredFadeIn = ({ children, className }: StaggeredFadeInProps) => {
   return (
     <motion.div
+      className={className}  // 👈 ahora soporta className
       variants={containerVariants}
       initial="hidden"
       animate="visible"
