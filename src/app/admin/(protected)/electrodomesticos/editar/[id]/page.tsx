@@ -52,12 +52,13 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
   };
 }
 
-export default function EditarElectrodomesticoPage({
-  params,
-}: {
+// ✅ Definimos el tipo correcto para los props
+type PageProps = {
   params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
+
+export default function EditarElectrodomesticoPage({ params }: PageProps) {
   const router = useRouter();
   const id = params.id;
 
