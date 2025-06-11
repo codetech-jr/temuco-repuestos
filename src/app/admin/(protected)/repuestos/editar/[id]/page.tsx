@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 // RepuestoFormData (de RepuestoForm) es la interfaz que el FORMULARIO usa para su estado y initialData
 import RepuestoForm, { RepuestoFormData } from '@/components/admin/RepuestoForm';
-import supabase from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
