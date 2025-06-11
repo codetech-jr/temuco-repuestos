@@ -52,16 +52,12 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
   };
 }
 
-// ✅ Definimos el tipo correcto para los props
-type PageProps = {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
+type Props = {
+  id: string;
 };
 
-export default function EditarElectrodomesticoPage({ params }: PageProps) {
+export default function EditarElectrodomesticoPage({ id }: Props) {
   const router = useRouter();
-  const id = params.id;
-
   const [initialData, setInitialData] = useState<Partial<ElectrodomesticoFormData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,14 +65,22 @@ export default function EditarElectrodomesticoPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!id) {
-      setError("ID no válido."); setLoading(false); toast.error("ID no válido."); return;
+      setError("ID no válido.");
+      setLoading(false);
+      toast.error("ID no válido.");
+      return;
     }
     if (!supabase) {
-      setError("Error de configuración."); setLoading(false); toast.error("Error de config."); return;
+      setError("Error de configuración.");
+      setLoading(false);
+      toast.error("Error de config.");
+      return;
     }
 
     const fetchElectrodomestico = async () => {
-      setLoading(true); setError(null); setFormSubmitError(null);
+      setLoading(true);
+      setError(null);
+      setFormSubmitError(null);
       try {
         const response = await fetch(`${API_BASE_URL}/electrodomesticos/${id}`, { cache: 'no-store' });
         if (!response.ok) {
@@ -98,30 +102,45 @@ export default function EditarElectrodomesticoPage({ params }: PageProps) {
   }, [id]);
 
   const handleUpdate = async (data: FormData): Promise<boolean> => {
-    setFormSubmitError(null); toast.dismiss();
-    if (!supabase) { return false; }
+    setFormSubmitError(null);
+    toast.dismiss();
+    if (!supabase) return false;
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { router.push('/admin/login'); return false; }
+    if (!session) {
+      router.push('/admin/login');
+      return false;
+    }
     const loadingToastId = toast.loading('Actualizando...');
     try {
       const response = await fetch(`${API_BASE_URL}/electrodomesticos/${id}`, {
-        method: 'PUT', headers: { 'Authorization': `Bearer ${session.access_token}` }, body: data,
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: data,
       });
       toast.dismiss(loadingToastId);
       if (!response.ok) {
         let errorMessage = `Error: ${response.status}`;
-        try { const responseData = await response.json(); errorMessage = responseData.message || errorMessage; } catch {}
-        toast.error(errorMessage); setFormSubmitError(errorMessage); return false;
+        try {
+          const responseData = await response.json();
+          errorMessage = responseData.message || errorMessage;
+        } catch { }
+        toast.error(errorMessage);
+        setFormSubmitError(errorMessage);
+        return false;
       }
       toast.success('¡Actualizado exitosamente!');
-      router.push('/admin/electrodomesticos'); router.refresh(); return true;
-    } catch (err: unknown) { return false; }
+      router.push('/admin/electrodomesticos');
+      router.refresh();
+      return true;
+    } catch (err: unknown) {
+      return false;
+    }
   };
 
   if (loading) return <LoadingSpinner className="min-h-[calc(100vh-200px)]" />;
   if (error) return <div className="container mx-auto p-4 text-red-600 text-center"><p>Error: {error}</p><Link href="/admin/electrodomesticos" className="text-blue-600 hover:underline mt-4 inline-block">Volver</Link></div>;
   if (!initialData) return <div className="container mx-auto p-4 text-center"><p>No se pudieron cargar los datos.</p><Link href="/admin/electrodomesticos" className="text-blue-600 hover:underline mt-4 inline-block">Volver</Link></div>;
-  
+
   return (
     <div className="container mx-auto p-4 md:p-8">
       <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F] mb-6">
@@ -132,11 +151,7 @@ export default function EditarElectrodomesticoPage({ params }: PageProps) {
           <p>{formSubmitError}</p>
         </div>
       )}
-      <ElectrodomesticoForm 
-        onSubmit={handleUpdate} 
-        initialData={initialData} 
-        isEditing={true} 
-      />
+      <ElectrodomesticoForm onSubmit={handleUpdate} initialData={initialData} isEditing={true} />
     </div>
   );
 }
