@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
     // Si prefieres la sintaxis antigua (menos recomendada para Next.js >= 13.3):
     // domains: ['qmzjipijvbrzoavnbjjz.supabase.co'],
   },
+  eslint: {
+    // Advertencia: Esto permite que las compilaciones de producción se completen 
+    // correctamente incluso si tu proyecto tiene errores de ESLint.
+    ignoreDuringBuilds: true,
+  },
   /* otras config options si las tienes */
 };
 

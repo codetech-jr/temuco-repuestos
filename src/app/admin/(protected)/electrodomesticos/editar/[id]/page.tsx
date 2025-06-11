@@ -100,7 +100,7 @@ export default function EditarElectrodomesticoPage() {
         }
         if (!response.ok) {
           let errorMessage = `Error al cargar datos: ${response.statusText}`;
-          try { const errorData = await response.json(); errorMessage = errorData.message || errorMessage; } catch (e) {}
+          try { const errorData = await response.json(); errorMessage = errorData.message || errorMessage; } catch (_e) {}
           throw new Error(errorMessage);
         }
         const dataFromAPI: ElectrodomesticoFromAPI = await response.json();

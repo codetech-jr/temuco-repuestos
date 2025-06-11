@@ -1,4 +1,5 @@
 // src/app/admin/(protected)/page.tsx
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 

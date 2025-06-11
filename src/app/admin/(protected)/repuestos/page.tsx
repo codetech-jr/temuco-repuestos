@@ -45,7 +45,7 @@ async function fetchAdminRepuestosFromAPI(
     const res = await fetch(endpoint, { cache: 'no-store' });
     if (!res.ok) {
       let errorDetail = `Error: ${res.status}`;
-      try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (e) {}
+      try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (_e) {}
       return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: errorDetail };
     }
     const d = await res.json();
@@ -62,7 +62,7 @@ async function deleteRepuestoFromAPI(id: string): Promise<{ success: boolean, er
     const res = await fetch(`${API_BASE_URL}/repuestos/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${session.access_token}` } });
     if (res.ok) return { success: true, error: null };
     let errorDetail = `Error: ${res.status}`;
-    try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (e) {}
+    try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (_e) {}
     return { success: false, error: errorDetail };
   } catch (e: any) {
     return { success: false, error: e.message || "Excepción" };
@@ -105,7 +105,7 @@ export default function AdminRepuestosPage() {
         ]);
         if (catRes.ok) { const data = await catRes.json(); if (Array.isArray(data)) setCategoryOptions(data); }
         if (brandRes.ok) { const data = await brandRes.json(); if (Array.isArray(data)) setBrandOptions(data); }
-      } catch (e) { toast.error("Error cargando opciones de filtro."); }
+      } catch (_e) { toast.error("Error cargando opciones de filtro."); }
     };
     fetchOptions();
   }, []);

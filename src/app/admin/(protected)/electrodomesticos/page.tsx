@@ -42,7 +42,7 @@ async function fetchAdminElectrodomesticosFromAPI(
     const res = await fetch(endpoint, { cache: 'no-store' });
     if (!res.ok) {
       let errorDetail = `Error: ${res.status}`;
-      try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (e) {}
+      try { const d = await res.json(); errorDetail = d.message || errorDetail; } catch (_e) {}
       return { data: [], totalItems: 0, totalPages: 0, currentPage: page, error: errorDetail };
     }
     const d = await res.json();
