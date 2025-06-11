@@ -1,26 +1,21 @@
+/// next.config.js
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: false,
+  // Desactiva el modo estricto de React si te causa dobles renders en desarrollo.
+  // En producción no tiene efecto.
+  reactStrictMode: false, 
+
+  // Configuración para permitir imágenes de dominios externos
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'qmzjiipijvbrzoavnbjjz.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/product-images/**',
+        hostname: 'qmzjiipijvbrzoavnbjjz.supabase.co', // Tu dominio de Supabase
       },
-      {
-        protocol: 'https',
-        hostname: 'images.pexels.com',
-      },
-      // Añade aquí cualquier otro dominio de imágenes que necesites
+      // Puedes añadir más dominios aquí si los necesitas
+      // Ejemplo: { protocol: 'https', hostname: 'ejemplo.com' }
     ],
-      eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
-    typedRoutes: false,
-  },
   },
 };
 
