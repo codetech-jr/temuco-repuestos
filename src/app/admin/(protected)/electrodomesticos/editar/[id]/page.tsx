@@ -1,258 +1,262 @@
-"use client";
-
-import { useEffect, useState } from 'react';
-import { useRouter, useParams, notFound } from 'next/navigation';
-import ElectrodomesticoForm, { ElectrodomesticoFormData } from '@/components/admin/ElectrodomesticoForm';
-import supabase from '@/lib/supabase/client';
-import toast from 'react-hot-toast';
+import Image from 'next/image';
 import Link from 'next/link';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { notFound } from 'next/navigation';
+import WhatsAppButton from '@/components/ui/WhatsAppButton';
+import ProductViewTracker, { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker';
+import RecentlyViewedProducts from '@/components/sections/RecentlyViewedProducts';
+import SimilarProducts from '@/components/sections/SimilarProducts';
+import { ShareButtons } from '@/components/products/ShareButtons';
+import type { Metadata, ResolvingMetadata } from 'next';
+import FadeIn from '@/components/utils/FadeIn';
+import StaggeredFadeIn from '@/components/utils/StaggeredFadeIn';
 
-export interface ElectrodomesticoFromAPI {
+export interface Electrodomestico {
   id: string;
   slug: string;
   name: string;
-  short_description?: string | null;
+  short_description?: string;
   price: number;
-  original_price?: number | null;
-  image_url?: string | null;
+  original_price?: number;
+  image_url: string;
   category: string;
   brand: string;
-  rating?: number | null;
-  review_count?: number | null;
-  long_description?: string | null;
-  features?: string[] | string | null;
-  specifications?: { key: string; value: string }[] | string | null;
-  images?: string[] | string | null;
-  stock?: number | null;
+  long_description?: string;
+  features?: string[];
+  specifications?: { key: string; value: string }[];
+  images?: string[];
+  stock?: number;
   is_active?: boolean;
   created_at?: string;
+  rating?: number;
+  review_count?: number;
+  product_type?: 'electrodomestico' | 'repuesto';
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-const REVALIDATE_SECRET = process.env.NEXT_PUBLIC_REVALIDATE_TOKEN || 'YOUR_DEFAULT_REVALIDATION_SECRET';
-
-function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partial<ElectrodomesticoFormData> {
-  return {
-    id: apiData.id,
-    slug: apiData.slug,
-    name: apiData.name,
-    category: apiData.category,
-    brand: apiData.brand,
-    short_description: apiData.short_description || '',
-    long_description: apiData.long_description || '',
-    is_active: apiData.is_active === undefined ? true : apiData.is_active,
-    created_at: apiData.created_at,
-    price: String(apiData.price ?? ''),
-    original_price: apiData.original_price != null ? String(apiData.original_price) : '',
-    stock: apiData.stock != null ? String(apiData.stock) : '',
-    rating: apiData.rating != null ? String(apiData.rating) : '',
-    review_count: apiData.review_count != null ? String(apiData.review_count) : '',
-    image_url: apiData.image_url || '',
-    features: typeof apiData.features === 'string' 
-        ? apiData.features 
-        : (Array.isArray(apiData.features) ? apiData.features.join(', ') : ''),
-    specifications: typeof apiData.specifications === 'string' 
-        ? apiData.specifications 
-        : (apiData.specifications ? JSON.stringify(apiData.specifications, null, 2) : '[]'),
-    images: typeof apiData.images === 'string' 
-        ? apiData.images 
-        : (Array.isArray(apiData.images) ? apiData.images.join(', ') : ''),
-  };
+async function getElectrodomesticoBySlugFromAPI(slug: string): Promise<Electrodomestico | null> {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const fetchUrl = `${API_BASE_URL}/electrodomesticos/slug/${slug}`;
+  try {
+    const res = await fetch(fetchUrl, { next: { revalidate: 600, tags: ['electrodomesticos', `electrodomesticos-${slug}`] }});
+    if (res.status === 404) return null;
+    if (!res.ok) return null;
+    const data = await res.json();
+    return { ...data, product_type: 'electrodomestico' } as Electrodomestico;
+  } catch (error) {
+    console.error(`Fetch Exception for electrodomestico (${fetchUrl}):`, error);
+    return null;
+  }
 }
 
-export default function EditarElectrodomesticoPage() {
-  const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+export async function generateMetadata(
+  { params }: { params: { slug: string } },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteName = "Temuco Repuestos";
 
-  const [initialData, setInitialData] = useState<Partial<ElectrodomesticoFormData> | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [formSubmitError, setFormSubmitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!id) {
-      setError("ID de electrodoméstico no válido.");
-      setLoading(false);
-      toast.error("ID de electrodoméstico no encontrado en la URL.");
-      notFound();
-      return;
-    }
-    if (!supabase) {
-      setError("Error de configuración: Cliente Supabase no disponible.");
-      setLoading(false);
-      toast.error("Error de configuración del cliente.");
-      notFound();
-      return;
-    }
-
-    const fetchElectrodomestico = async () => {
-      setLoading(true);
-      setError(null);
-      setFormSubmitError(null);
-      try {
-        const response = await fetch(`${API_BASE_URL}/electrodomesticos/${id}`, { cache: 'no-store' });
-        
-        if (response.status === 404) {
-            notFound();
-            return;
-        }
-        if (!response.ok) {
-          let errorMessage = `Error al cargar datos: ${response.statusText}`;
-          try { const errorData = await response.json(); errorMessage = errorData.message || errorMessage; } catch (_e) {}
-          throw new Error(errorMessage);
-        }
-        const dataFromAPI: ElectrodomesticoFromAPI = await response.json();
-        setInitialData(adaptApiDataToInitialFormData(dataFromAPI));
-      } catch (err: unknown) {
-        let message = 'Ocurrió un error desconocido al cargar los datos.';
-        if (err instanceof Error) message = err.message;
-        console.error("Error fetching electrodomestico para editar:", err);
-        setError(message);
-        toast.error(message);
-        notFound();
-      } finally {
-        setLoading(false);
-      }
+  if (!electrodomestico) {
+    return {
+      title: `Electrodoméstico no encontrado - ${siteName}`,
+      description: `El electrodoméstico que buscas no está disponible en ${siteName}.`,
     };
-    fetchElectrodomestico();
-  }, [id]);
+  }
 
-  const handleUpdateElectrodomestico = async (formData: FormData | any): Promise<boolean> => {
-    setFormSubmitError(null);
-    toast.dismiss();
-    let operationSuccessful = false;
-
-    if (!supabase) {
-      const errorMsg = "Error de configuración: Cliente Supabase no disponible.";
-      toast.error(errorMsg);
-      setFormSubmitError(errorMsg);
-      return false;
-    }
-    
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError || !session) {
-      const errorMsg = "No estás autenticado o tu sesión ha expirado.";
-      toast.error(errorMsg);
-      setFormSubmitError(errorMsg);
-      router.push('/admin/login');
-      return false;
-    }
-    
-    const token = session.access_token;
-    const endpoint = `${API_BASE_URL}/electrodomesticos/${id}`;
-    const loadingToastId = toast.loading('Actualizando electrodoméstico...');
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify(formData), // formData ya debe estar preparada por ElectrodomesticoForm
+  const productPageUrl = `${siteUrl}/electrodomesticos/${electrodomestico.slug}`;
+  const ogImageBaseUrl = electrodomestico.image_url && electrodomestico.image_url.startsWith('http') ? '' : siteUrl;
+  
+  const ogImagesList: { url: string; width?: number; height?: number; alt?: string }[] = [];
+  if (electrodomestico.image_url) {
+    ogImagesList.push({
+      url: `${ogImageBaseUrl}${electrodomestico.image_url}`,
+      width: 1200, height: 630, alt: electrodomestico.name,
+    });
+  }
+  electrodomestico.images?.slice(0, 2).forEach(img => {
+    if (ogImagesList.length < 3) {
+      ogImagesList.push({
+        url: img.startsWith('http') ? img : `${siteUrl}${img}`,
+        width: 800, height: 600, alt: `${electrodomestico.name} - Imagen adicional`,
       });
-
-      let responseData;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.includes("application/json")) {
-          responseData = await response.json();
-      } else {
-          if (response.ok) { responseData = { success: true, message: '¡Electrodoméstico actualizado! (Respuesta no JSON)'}; }
-          else { const textResponse = await response.text(); responseData = { message: `Error ${response.status}: ${response.statusText || textResponse.substring(0,100)}`, fieldErrors: null, success: false }; }
-      }
-      
-      toast.dismiss(loadingToastId);
-
-  if (!response.ok) {
-        console.error('Error API al actualizar electrodoméstico:', response.status, responseData);
-        let errorMessage = responseData?.message || `Error al actualizar electrodoméstico: ${response.statusText}`;
-        if (responseData?.fieldErrors) {
-          const fieldErrorMessages = Object.entries(responseData.fieldErrors)
-            .map(([field, errors]) => `${field}: ${(errors as string[]).join(', ')}`)
-            .join('; ');
-          if (fieldErrorMessages) errorMessage += ` Detalles: ${fieldErrorMessages}`;
-        } else if (responseData?.details) {
-            errorMessage += ` Detalles: ${responseData.details}`;
-        }
-        toast.error(errorMessage, { duration: 6000 });
-        setFormSubmitError(errorMessage);
-        return false;
-      } else {
-        toast.success(responseData?.message || '¡Electrodoméstico actualizado exitosamente!');
-        operationSuccessful = true;
-      }
-    } catch (error: unknown) {
-      toast.dismiss(loadingToastId);
-      let errorMessage = 'Ocurrió una excepción al intentar actualizar el electrodoméstico.';
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      }
-      console.error('Excepción en handleUpdateElectrodomestico:', error);
-      toast.error(errorMessage);
-      setFormSubmitError(errorMessage);
-      return false;
     }
+  });
+  if (ogImagesList.length === 0 && ogImagesList.every(img => !img.url)) {
+    ogImagesList.push({ url: `${siteUrl}/og-default-image.png`, width: 1200, height: 630, alt: siteName });
+  }
 
-    if (operationSuccessful) {
-      try {
-        const currentSlug = initialData?.slug || (formData as ElectrodomesticoFormData).slug;
-        if (currentSlug) {
-            await fetch(`/api/revalidate?secret=${REVALIDATE_SECRET}`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path: `/electrodomesticos/${currentSlug}` })
-            });
-        }
-        await fetch(`/api/revalidate?secret=${REVALIDATE_SECRET}`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag: 'lista-electrodomesticos' })
-        });
-        toast.success('Caché revalidada.');
-        router.push('/admin/electrodomesticos');
-        // router.refresh(); // Podría ser necesario si la revalidación no es inmediata o para UI admin
-      } catch (revalidateError) {
-        console.error("Error durante la revalidación:", revalidateError);
-        toast.error('Actualizado, pero falló revalidación de caché.');
-        router.push('/admin/electrodomesticos');
-      }
+  return {
+    title: `${electrodomestico.name} - ${electrodomestico.category || ''} ${siteName}`,
+    description: electrodomestico.short_description || `Descubre ${electrodomestico.name}, ${electrodomestico.brand || ''} ${electrodomestico.category || ''}. Calidad y servicio en ${siteName}.`,
+    keywords: [electrodomestico.name, electrodomestico.brand, electrodomestico.category, 'electrodomestico', siteName, 'comprar', 'ficha técnica'].filter(Boolean).join(', '),
+    openGraph: {
+      title: `${electrodomestico.name} - ${siteName}`,
+      description: electrodomestico.short_description || `Todo sobre ${electrodomestico.name}.`,
+      url: productPageUrl,
+      siteName: siteName,
+      images: ogImagesList.filter(img => img.url),
+      type: 'article', 
+    },
+    other: {
+      'og:type': 'product',
+      'product:brand': electrodomestico.brand,
+      'product:availability': electrodomestico.stock !== undefined && electrodomestico.stock > 0 ? 'instock' : 'oos',
+      'product:condition': 'new',
+      'product:price:amount': electrodomestico.price.toString(),
+      'product:price:currency': 'CLP',
+      'product:retailer_item_id': electrodomestico.slug,
     }
-    return operationSuccessful;
+  };
+}
+
+export async function generateStaticParams() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  try {
+    const res = await fetch(`${API_BASE_URL}/electrodomesticos?limit=10000`);
+    if (!res.ok) return [];
+    const responseData = await res.json();
+    const todosLosElectrodomesticos: Electrodomestico[] = responseData.data || [];
+    return todosLosElectrodomesticos.map((item) => ({ slug: item.slug }));
+  } catch (error) {
+    return [];
+  }
+}
+
+export default async function ElectrodomesticoDetailPage({
+  params,
+}: {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
+
+  if (!electrodomestico) {
+    notFound();
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const productUrl = `${siteUrl}/electrodomesticos/${electrodomestico.slug}`;
+
+  const productInfoForTracker: RecentlyViewedProductInfo = {
+    id: electrodomestico.id,
+    slug: electrodomestico.slug,
+    name: electrodomestico.name,
+    image_url: electrodomestico.image_url,
+    price: electrodomestico.price,
+    product_type: 'electrodomestico',
   };
 
-  if (loading) return <LoadingSpinner className="min-h-[calc(100vh-200px)]" />;
-  
-  if (error && !initialData) return ( // Mostrar error solo si initialData no se cargó
-    <div className="container mx-auto p-4 text-red-600 text-center">
-      <p className="font-semibold">Error al cargar datos:</p>
-      <p>{error}</p>
-      <Link href="/admin/electrodomesticos" className="text-blue-600 hover:underline mt-4 inline-block">Volver a la lista</Link>
-    </div>
-  );
-  
-  if (!initialData && !loading) return (
-    <div className="container mx-auto p-4 text-center">
-      <p>No se pudo cargar el electrodoméstico o no existe.</p>
-      <Link href="/admin/electrodomesticos" className="text-blue-600 hover:underline mt-4 inline-block">Volver a la lista</Link>
-    </div>
-  );
-  
+  const displayImage = (electrodomestico.images && electrodomestico.images.length > 0)
+                       ? electrodomestico.images[0]
+                       : electrodomestico.image_url;
+
+  const productJsonLd = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": electrodomestico.name,
+    "image": displayImage && displayImage.startsWith('http') ? displayImage : `${siteUrl}${displayImage || '/placeholder.png'}`,
+    "description": electrodomestico.long_description || electrodomestico.short_description || `Información detallada sobre ${electrodomestico.name}`,
+    "sku": electrodomestico.id,
+    "mpn": electrodomestico.slug,
+    "brand": { "@type": "Brand", "name": electrodomestico.brand },
+    "offers": {
+      "@type": "Offer", "url": productUrl, "priceCurrency": "CLP",
+      "price": electrodomestico.price.toString(),
+      "availability": electrodomestico.stock !== undefined && electrodomestico.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    },
+    ...(electrodomestico.rating && electrodomestico.review_count && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": electrodomestico.rating.toString(),
+        "reviewCount": electrodomestico.review_count.toString()
+      }
+    })
+  };
+
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <h1 className="text-2xl md:text-3xl font-bold text-[#002A7F] mb-6">
-        Editar Electrodoméstico: <span className="text-gray-700">{initialData?.name || ''}</span>
-      </h1>
-      {formSubmitError && (
-        <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md" role="alert">
-          <p className="font-bold">Error al actualizar:</p>
-          <p>{formSubmitError}</p>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <ProductViewTracker productInfo={productInfoForTracker} />
+      <div className="bg-[#F7FAFC] py-8 md:py-12 overflow-x-hidden">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-start">
+            <FadeIn>
+              <div className="flex flex-col">
+                <div className="aspect-square relative rounded-lg overflow-hidden shadow-lg bg-white">
+                  <Image
+                    src={displayImage || '/placeholder.png'}
+                    alt={electrodomestico.name}
+                    fill
+                    style={{ objectFit: "contain" }}
+                    className="p-2 sm:p-4 md:p-6"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    priority
+                  />
+                </div>
+                {electrodomestico.images && electrodomestico.images.length > 1 && (
+                    <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                        {electrodomestico.images.map((imgUrl, index) => (
+                            <div key={index} className="aspect-square relative border rounded overflow-hidden bg-white">
+                                <Image 
+                                    src={imgUrl} 
+                                    alt={`${electrodomestico.name} - imagen ${index + 1}`} 
+                                    fill 
+                                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                                    style={{objectFit: "contain"}} 
+                                    className="p-1 cursor-pointer hover:opacity-75 transition-opacity"
+                                    priority
+                                />
+                            </div>
+                        ))}
+                    </div>
+                )}
+              </div>
+            </FadeIn>
+            <StaggeredFadeIn className="space-y-4">
+              <div><h1 className="text-3xl md:text-4xl font-bold text-[#002A7F]">{electrodomestico.name}</h1></div>
+              <div>
+                {electrodomestico.brand && (<p className="text-sm text-[#718096]">Marca: <span className="font-medium text-[#2D3748]">{electrodomestico.brand}</span></p>)}
+                {electrodomestico.category && (<p className="text-sm text-[#718096] mt-1">Categoría: <span className="font-medium text-[#2D3748]">{electrodomestico.category}</span></p>)}
+              </div>
+              <div className="border-t border-b border-gray-200 py-2"><ShareButtons url={productUrl} title={electrodomestico.name} /></div>
+              <div>
+                <p className="text-2xl md:text-3xl font-bold text-[#C8102E]">
+                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.price)}
+                  {electrodomestico.original_price && electrodomestico.original_price > electrodomestico.price && (
+                    <span className="ml-3 text-base line-through text-[#718096]">
+                      {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.original_price)}
+                    </span>
+                  )}
+                </p>
+              </div>
+              {electrodomestico.short_description && (<p className="text-lg text-[#2D3748]">{electrodomestico.short_description}</p>)}
+              {electrodomestico.long_description && (<div className="prose prose-sm sm:prose-base max-w-none text-[#2D3748] prose-headings:text-[#002A7F] prose-strong:text-[#002A7F]" dangerouslySetInnerHTML={{ __html: electrodomestico.long_description.replace(/\n/g, '<br />') }} />)}
+              {electrodomestico.features && electrodomestico.features.length > 0 && (
+                <div>
+                  <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Características Destacadas:</h3>
+                  <ul className="list-disc list-inside space-y-1 text-[#2D3748]">{electrodomestico.features.map((f, i) => (<li key={i}>{f}</li>))}</ul>
+                </div>
+              )}
+              {electrodomestico.specifications && electrodomestico.specifications.length > 0 && (
+                <div>
+                  <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Especificaciones:</h3>
+                  <ul className="space-y-2 text-[#2D3748]">{electrodomestico.specifications.map((s, i) => (<li key={i} className="flex flex-col sm:flex-row sm:items-baseline"><strong className="w-full sm:w-1/3 md:w-1/4 shrink-0 font-medium text-[#002A7F] mb-0.5 sm:mb-0">{s.key}:</strong><span>{s.value}</span></li>))}</ul>
+                </div>
+              )}
+              {electrodomestico.stock !== undefined && (
+                <div>{electrodomestico.stock > 0 ? (<p className="text-sm text-green-600">Stock disponible: {electrodomestico.stock} unidades</p>) : (<p className="text-sm text-red-600">Producto agotado temporalmente</p>)}</div>
+              )}
+              <div className="mt-8"><WhatsAppButton phoneNumber="584123975545" productName={electrodomestico.name} buttonText="Consultar por este Electrodoméstico"/></div>
+              <div className="mt-4"><Link href="/electrodomesticos" className="inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">← Volver al catálogo</Link></div>
+            </StaggeredFadeIn>
+          </div>
         </div>
-      )}
-      {initialData && (
-        <ElectrodomesticoForm 
-          onSubmit={handleUpdateElectrodomestico} 
-          initialData={initialData} 
-          isEditing={true} 
-        />
-      )}
-    </div>
+      </div>
+      {(electrodomestico.category || electrodomestico.brand) && (<FadeIn><SimilarProducts currentProductId={electrodomestico.id} productType="electrodomestico" category={electrodomestico.category} brand={electrodomestico.brand} limit={4} title="También Te Podría Interesar"/></FadeIn>)}
+      <div className="container mx-auto px-4 my-8 md:my-12"><FadeIn><RecentlyViewedProducts title="Visto Recientemente"/></FadeIn></div>
+    </>
   );
 }
