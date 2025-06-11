@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+<<<<<<< HEAD
   reactStrictMode: false, 
   images: {
     remotePatterns: [
@@ -29,3 +30,25 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
+=======
+  reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'qmzjipijvbrzoavnbjjz.supabase.co',
+        port: '',
+        pathname: '/storage/v1/object/public/product-images/**',
+      },
+    ],
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  experimental: {
+    typedRoutes: false,
+  },
+};
+
+module.exports = nextConfig;
+>>>>>>> 01fbc02198e4e5c9f461a4b0daceabe5f1953891

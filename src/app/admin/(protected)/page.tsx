@@ -1,5 +1,10 @@
 // src/app/admin/(protected)/page.tsx
+<<<<<<< HEAD
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+=======
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+>>>>>>> 01fbc02198e4e5c9f461a4b0daceabe5f1953891
 import { redirect } from 'next/navigation';
 
 // ANIMACIÓN: Importamos los componentes de animación

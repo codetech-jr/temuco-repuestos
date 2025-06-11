@@ -31,12 +31,25 @@ const itemVariants = {
   },
 };
 
+<<<<<<< HEAD
 // --- PASO 2: Usar la nueva interfaz y recibir 'className' ---
+=======
+// ✅ Definimos las props correctamente
+interface StaggeredFadeInProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+>>>>>>> 01fbc02198e4e5c9f461a4b0daceabe5f1953891
 const StaggeredFadeIn = ({ children, className }: StaggeredFadeInProps) => {
   return (
     // --- PASO 3: Aplicar 'className' al elemento principal ---
     <motion.div
+<<<<<<< HEAD
       className={className} // <-- LA USAMOS AQUÍ
+=======
+      className={className}  // 👈 ahora soporta className
+>>>>>>> 01fbc02198e4e5c9f461a4b0daceabe5f1953891
       variants={containerVariants}
       initial="hidden"
       animate="visible"

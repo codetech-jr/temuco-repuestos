@@ -32,10 +32,6 @@ export interface Electrodomestico {
   product_type?: 'electrodomestico' | 'repuesto';
 }
 
-interface ElectrodomesticoDetailPageProps {
-  params: { slug: string };
-}
-
 async function getElectrodomesticoBySlugFromAPI(slug: string): Promise<Electrodomestico | null> {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
   const fetchUrl = `${API_BASE_URL}/electrodomesticos/slug/${slug}`;
@@ -52,7 +48,7 @@ async function getElectrodomesticoBySlugFromAPI(slug: string): Promise<Electrodo
 }
 
 export async function generateMetadata(
-  { params }: ElectrodomesticoDetailPageProps,
+  { params }: { params: { slug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
@@ -125,7 +121,12 @@ export async function generateStaticParams() {
   }
 }
 
-export default async function ElectrodomesticoDetailPage({ params }: ElectrodomesticoDetailPageProps) {
+export default async function ElectrodomesticoDetailPage({
+  params,
+}: {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
 
   if (!electrodomestico) {

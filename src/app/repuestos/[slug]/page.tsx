@@ -1,17 +1,16 @@
-// src/app/repuestos/[slug]/page.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import WhatsAppButton from '@/components/ui/WhatsAppButton';
-import { ShareButtons } from '@/components/products/ShareButtons';
-import ProductViewTracker, { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker'; 
+import ProductViewTracker, { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker';
 import RecentlyViewedProducts from '@/components/sections/RecentlyViewedProducts';
 import SimilarProducts from '@/components/sections/SimilarProducts';
+import { ShareButtons } from '@/components/products/ShareButtons';
 import type { Metadata, ResolvingMetadata } from 'next';
 import FadeIn from '@/components/utils/FadeIn';
 import StaggeredFadeIn from '@/components/utils/StaggeredFadeIn';
 
-export interface Repuesto {
+export interface Electrodomestico {
   id: string;
   slug: string;
   name: string;
@@ -21,7 +20,6 @@ export interface Repuesto {
   image_url: string;
   category: string;
   brand: string;
-  is_original?: boolean;
   long_description?: string;
   features?: string[];
   specifications?: { key: string; value: string }[];
@@ -29,75 +27,70 @@ export interface Repuesto {
   stock?: number;
   is_active?: boolean;
   created_at?: string;
+  rating?: number;
+  review_count?: number;
   product_type?: 'electrodomestico' | 'repuesto';
 }
 
-interface RepuestoDetailPageProps {
-  params: { slug: string };
-}
-
-async function getRepuestoBySlugFromAPI(slug: string): Promise<Repuesto | null> {
+async function getElectrodomesticoBySlugFromAPI(slug: string): Promise<Electrodomestico | null> {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
-  const fetchUrl = `${API_BASE_URL}/repuestos/slug/${slug}`;
+  const fetchUrl = `${API_BASE_URL}/electrodomesticos/slug/${slug}`;
   try {
-    const res = await fetch(fetchUrl, { next: { revalidate: 600, tags: ['repuestos', `repuesto-${slug}`] }});
+    const res = await fetch(fetchUrl, { next: { revalidate: 600, tags: ['electrodomesticos', `electrodomesticos-${slug}`] }});
     if (res.status === 404) return null;
-    if (!res.ok) {
-      console.error(`API Error (${fetchUrl}): ${res.status} ${res.statusText}`);
-      return null;
-    }
+    if (!res.ok) return null;
     const data = await res.json();
-    return { ...data, product_type: 'repuesto' } as Repuesto;
+    return { ...data, product_type: 'electrodomestico' } as Electrodomestico;
   } catch (error) {
-    console.error(`Fetch Exception for repuesto (${fetchUrl}):`, error);
+    console.error(`Fetch Exception for electrodomestico (${fetchUrl}):`, error);
     return null;
   }
 }
 
 export async function generateMetadata(
-  { params }: RepuestoDetailPageProps,
+  { params }: { params: { slug: string } },
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const repuesto = await getRepuestoBySlugFromAPI(params.slug);
+  const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const siteName = "Temuco Repuestos";
 
-  if (!repuesto) {
+  if (!electrodomestico) {
     return {
-      title: `Repuesto no encontrado - ${siteName}`,
-      description: `El repuesto que buscas no está disponible en ${siteName}.`,
+      title: `Electrodoméstico no encontrado - ${siteName}`,
+      description: `El electrodoméstico que buscas no está disponible en ${siteName}.`,
     };
   }
 
-  const productPageUrl = `${siteUrl}/repuestos/${repuesto.slug}`;
-  const ogImageBaseUrl = repuesto.image_url && repuesto.image_url.startsWith('http') ? '' : siteUrl;
+  const productPageUrl = `${siteUrl}/electrodomesticos/${electrodomestico.slug}`;
+  const ogImageBaseUrl = electrodomestico.image_url && electrodomestico.image_url.startsWith('http') ? '' : siteUrl;
   
   const ogImagesList: { url: string; width?: number; height?: number; alt?: string }[] = [];
-  if (repuesto.image_url) {
+  if (electrodomestico.image_url) {
     ogImagesList.push({
-      url: `${ogImageBaseUrl}${repuesto.image_url}`,
-      width: 1200, height: 630, alt: repuesto.name,
+      url: `${ogImageBaseUrl}${electrodomestico.image_url}`,
+      width: 1200, height: 630, alt: electrodomestico.name,
     });
   }
-  repuesto.images?.slice(0, 2).forEach(img => {
-    if (ogImagesList.length < 3 && img) {
+  electrodomestico.images?.slice(0, 2).forEach(img => {
+    if (ogImagesList.length < 3) {
       ogImagesList.push({
         url: img.startsWith('http') ? img : `${siteUrl}${img}`,
-        width: 800, height: 600, alt: `${repuesto.name} - Imagen adicional`,
+        width: 800, height: 600, alt: `${electrodomestico.name} - Imagen adicional`,
       });
     }
   });
-  if (ogImagesList.length === 0 || ogImagesList.every(img => !img.url)) {
+  if (ogImagesList.length === 0 && ogImagesList.every(img => !img.url)) {
     ogImagesList.push({ url: `${siteUrl}/og-default-image.png`, width: 1200, height: 630, alt: siteName });
   }
 
   return {
-    title: `${repuesto.name} - ${repuesto.category || ''} ${siteName}`,
-    description: repuesto.short_description || `Encuentra ${repuesto.name}, ${repuesto.brand || ''} ${repuesto.category || ''}. Repuestos de calidad en ${siteName}.`,
-    keywords: [repuesto.name, repuesto.brand, repuesto.category, 'repuesto', siteName, 'comprar', 'especificaciones'].filter(Boolean).join(', '),
+    title: `${electrodomestico.name} - ${electrodomestico.category || ''} ${siteName}`,
+    description: electrodomestico.short_description || `Descubre ${electrodomestico.name}, ${electrodomestico.brand || ''} ${electrodomestico.category || ''}. Calidad y servicio en ${siteName}.`,
+    keywords: [electrodomestico.name, electrodomestico.brand, electrodomestico.category, 'electrodomestico', siteName, 'comprar', 'ficha técnica'].filter(Boolean).join(', '),
     openGraph: {
-      title: `${repuesto.name} - ${siteName}`,
-      description: repuesto.short_description || `Todo sobre el repuesto ${repuesto.name}.`,
+      title: `${electrodomestico.name} - ${siteName}`,
+      description: electrodomestico.short_description || `Todo sobre ${electrodomestico.name}.`,
       url: productPageUrl,
       siteName: siteName,
       images: ogImagesList.filter(img => img.url),
@@ -105,13 +98,12 @@ export async function generateMetadata(
     },
     other: {
       'og:type': 'product',
-      'product:brand': repuesto.brand,
-      'product:availability_text': repuesto.stock !== undefined && repuesto.stock > 0 ? 'En stock' : 'Agotado',
+      'product:brand': electrodomestico.brand,
+      'product:availability': electrodomestico.stock !== undefined && electrodomestico.stock > 0 ? 'instock' : 'oos',
       'product:condition': 'new',
-      'product:price:amount': repuesto.price.toString(),
+      'product:price:amount': electrodomestico.price.toString(),
       'product:price:currency': 'CLP',
-      'product:retailer_item_id': repuesto.slug,
-      'product:category': repuesto.category,
+      'product:retailer_item_id': electrodomestico.slug,
     }
   };
 }
@@ -119,55 +111,66 @@ export async function generateMetadata(
 export async function generateStaticParams() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
   try {
-    const res = await fetch(`${API_BASE_URL}/repuestos?limit=10000`);
+    const res = await fetch(`${API_BASE_URL}/electrodomesticos?limit=10000`);
     if (!res.ok) return [];
     const responseData = await res.json();
-    const todosLosRepuestos: Repuesto[] = responseData.data || [];
-    return todosLosRepuestos.map((item) => ({ slug: item.slug }));
+    const todosLosElectrodomesticos: Electrodomestico[] = responseData.data || [];
+    return todosLosElectrodomesticos.map((item) => ({ slug: item.slug }));
   } catch (error) {
     return [];
   }
 }
 
-export default async function RepuestoDetailPage({ params }: RepuestoDetailPageProps) {
-  const repuesto = await getRepuestoBySlugFromAPI(params.slug);
+export default async function ElectrodomesticoDetailPage({
+  params,
+}: {
+  params: { slug: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const electrodomestico = await getElectrodomesticoBySlugFromAPI(params.slug);
 
-  if (!repuesto) {
+  if (!electrodomestico) {
     notFound();
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const productUrl = `${siteUrl}/repuestos/${repuesto.slug}`;
+  const productUrl = `${siteUrl}/electrodomesticos/${electrodomestico.slug}`;
 
   const productInfoForTracker: RecentlyViewedProductInfo = {
-    id: repuesto.id,
-    slug: repuesto.slug,
-    name: repuesto.name,
-    image_url: repuesto.image_url,
-    price: repuesto.price,
-    product_type: 'repuesto',
+    id: electrodomestico.id,
+    slug: electrodomestico.slug,
+    name: electrodomestico.name,
+    image_url: electrodomestico.image_url,
+    price: electrodomestico.price,
+    product_type: 'electrodomestico',
   };
 
-  const displayImage = (repuesto.images && repuesto.images.length > 0)
-                       ? repuesto.images[0]
-                       : repuesto.image_url;
+  const displayImage = (electrodomestico.images && electrodomestico.images.length > 0)
+                       ? electrodomestico.images[0]
+                       : electrodomestico.image_url;
 
   const productJsonLd = {
     "@context": "https://schema.org/",
     "@type": "Product",
-    "name": repuesto.name,
+    "name": electrodomestico.name,
     "image": displayImage && displayImage.startsWith('http') ? displayImage : `${siteUrl}${displayImage || '/placeholder.png'}`,
-    "description": repuesto.long_description || repuesto.short_description || `Información detallada sobre el repuesto ${repuesto.name}`,
-    "sku": repuesto.id,
-    "mpn": repuesto.slug,
-    "brand": { "@type": "Brand", "name": repuesto.brand },
-    "category": repuesto.category,
+    "description": electrodomestico.long_description || electrodomestico.short_description || `Información detallada sobre ${electrodomestico.name}`,
+    "sku": electrodomestico.id,
+    "mpn": electrodomestico.slug,
+    "brand": { "@type": "Brand", "name": electrodomestico.brand },
     "offers": {
       "@type": "Offer", "url": productUrl, "priceCurrency": "CLP",
-      "price": repuesto.price.toString(),
-      "availability": repuesto.stock !== undefined && repuesto.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "price": electrodomestico.price.toString(),
+      "availability": electrodomestico.stock !== undefined && electrodomestico.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "itemCondition": "https://schema.org/NewCondition"
     },
+    ...(electrodomestico.rating && electrodomestico.review_count && {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": electrodomestico.rating.toString(),
+        "reviewCount": electrodomestico.review_count.toString()
+      }
+    })
   };
 
   return (
@@ -185,25 +188,26 @@ export default async function RepuestoDetailPage({ params }: RepuestoDetailPageP
                 <div className="aspect-square relative rounded-lg overflow-hidden shadow-lg bg-white">
                   <Image
                     src={displayImage || '/placeholder.png'}
-                    alt={repuesto.name}
+                    alt={electrodomestico.name}
                     fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     style={{ objectFit: "contain" }}
                     className="p-2 sm:p-4 md:p-6"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     priority
                   />
                 </div>
-                {repuesto.images && repuesto.images.length > 1 && (
+                {electrodomestico.images && electrodomestico.images.length > 1 && (
                     <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-                        {repuesto.images.map((imgUrl, index) => (
+                        {electrodomestico.images.map((imgUrl, index) => (
                             <div key={index} className="aspect-square relative border rounded overflow-hidden bg-white">
                                 <Image 
                                     src={imgUrl} 
-                                    alt={`${repuesto.name} - imagen ${index + 1}`} 
+                                    alt={`${electrodomestico.name} - imagen ${index + 1}`} 
                                     fill 
-                                    sizes="(max-width: 640px) 20vw, (max-width: 768px) 15vw, 10vw"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                     style={{objectFit: "contain"}} 
                                     className="p-1 cursor-pointer hover:opacity-75 transition-opacity"
+                                    priority
                                 />
                             </div>
                         ))}
@@ -212,54 +216,47 @@ export default async function RepuestoDetailPage({ params }: RepuestoDetailPageP
               </div>
             </FadeIn>
             <StaggeredFadeIn className="space-y-4">
-              <div><h1 className="text-3xl md:text-4xl font-bold text-[#002A7F]">{repuesto.name}</h1></div>
+              <div><h1 className="text-3xl md:text-4xl font-bold text-[#002A7F]">{electrodomestico.name}</h1></div>
               <div>
-                {repuesto.brand && (<p className="text-sm text-[#718096]">Marca: <span className="font-medium text-[#2D3748]">{repuesto.brand}</span></p>)}
-                {repuesto.category && (<p className="text-sm text-[#718096] mt-1">Categoría: <span className="font-medium text-[#2D3748]">{repuesto.category}</span></p>)}
+                {electrodomestico.brand && (<p className="text-sm text-[#718096]">Marca: <span className="font-medium text-[#2D3748]">{electrodomestico.brand}</span></p>)}
+                {electrodomestico.category && (<p className="text-sm text-[#718096] mt-1">Categoría: <span className="font-medium text-[#2D3748]">{electrodomestico.category}</span></p>)}
               </div>
-              <div className="border-t border-b border-gray-200 py-2"><ShareButtons url={productUrl} title={repuesto.name} /></div>
-              {repuesto.is_original !== undefined && (
-                  <p className="text-sm">
-                      <span className={`font-semibold px-2 py-0.5 rounded-full text-xs ${repuesto.is_original ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-                          {repuesto.is_original ? "Original" : "Alternativo"}
-                      </span>
-                  </p>
-              )}
+              <div className="border-t border-b border-gray-200 py-2"><ShareButtons url={productUrl} title={electrodomestico.name} /></div>
               <div>
                 <p className="text-2xl md:text-3xl font-bold text-[#C8102E]">
-                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(repuesto.price)}
-                  {repuesto.original_price && repuesto.original_price > repuesto.price && (
+                  {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.price)}
+                  {electrodomestico.original_price && electrodomestico.original_price > electrodomestico.price && (
                     <span className="ml-3 text-base line-through text-[#718096]">
-                      {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(repuesto.original_price)}
+                      {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(electrodomestico.original_price)}
                     </span>
                   )}
                 </p>
               </div>
-              {repuesto.short_description && (<p className="text-lg text-[#2D3748]">{repuesto.short_description}</p>)}
-              {repuesto.long_description && (<div className="prose prose-sm sm:prose-base max-w-none text-[#2D3748] prose-headings:text-[#002A7F] prose-strong:text-[#002A7F]" dangerouslySetInnerHTML={{ __html: repuesto.long_description.replace(/\n/g, '<br />') }} />)}
-              {repuesto.features && repuesto.features.length > 0 && (
+              {electrodomestico.short_description && (<p className="text-lg text-[#2D3748]">{electrodomestico.short_description}</p>)}
+              {electrodomestico.long_description && (<div className="prose prose-sm sm:prose-base max-w-none text-[#2D3748] prose-headings:text-[#002A7F] prose-strong:text-[#002A7F]" dangerouslySetInnerHTML={{ __html: electrodomestico.long_description.replace(/\n/g, '<br />') }} />)}
+              {electrodomestico.features && electrodomestico.features.length > 0 && (
                 <div>
-                  <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Características:</h3>
-                  <ul className="list-disc list-inside space-y-1 text-[#2D3748]">{repuesto.features.map((f, i) => (<li key={i}>{f}</li>))}</ul>
+                  <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Características Destacadas:</h3>
+                  <ul className="list-disc list-inside space-y-1 text-[#2D3748]">{electrodomestico.features.map((f, i) => (<li key={i}>{f}</li>))}</ul>
                 </div>
               )}
-              {repuesto.specifications && repuesto.specifications.length > 0 && (
+              {electrodomestico.specifications && electrodomestico.specifications.length > 0 && (
                 <div>
                   <h3 className="text-xl font-semibold text-[#002A7F] mb-2">Especificaciones:</h3>
-                  <ul className="space-y-2 text-[#2D3748]">{repuesto.specifications.map((s, i) => (<li key={i} className="flex flex-col sm:flex-row sm:items-baseline"><strong className="w-full sm:w-1/3 md:w-1/4 shrink-0 font-medium text-[#002A7F] mb-0.5 sm:mb-0">{s.key}:</strong><span>{s.value}</span></li>))}</ul>
+                  <ul className="space-y-2 text-[#2D3748]">{electrodomestico.specifications.map((s, i) => (<li key={i} className="flex flex-col sm:flex-row sm:items-baseline"><strong className="w-full sm:w-1/3 md:w-1/4 shrink-0 font-medium text-[#002A7F] mb-0.5 sm:mb-0">{s.key}:</strong><span>{s.value}</span></li>))}</ul>
                 </div>
               )}
-              {repuesto.stock !== undefined && (
-                <div>{repuesto.stock > 0 ? (<p className="text-sm text-green-600">Stock disponible: {repuesto.stock} unidades</p>) : (<p className="text-sm text-red-600">Producto agotado temporalmente</p>)}</div>
+              {electrodomestico.stock !== undefined && (
+                <div>{electrodomestico.stock > 0 ? (<p className="text-sm text-green-600">Stock disponible: {electrodomestico.stock} unidades</p>) : (<p className="text-sm text-red-600">Producto agotado temporalmente</p>)}</div>
               )}
-              <div className="mt-8"><WhatsAppButton phoneNumber="584123975545" productName={repuesto.name} buttonText="Consultar por este Repuesto"/></div>
-              <div className="mt-4"><Link href="/repuestos" className="inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">← Volver al catálogo</Link></div>
+              <div className="mt-8"><WhatsAppButton phoneNumber="584123975545" productName={electrodomestico.name} buttonText="Consultar por este Electrodoméstico"/></div>
+              <div className="mt-4"><Link href="/electrodomesticos" className="inline-block text-[#002A7F] hover:text-[#002266] hover:underline transition-colors duration-300">← Volver al catálogo</Link></div>
             </StaggeredFadeIn>
           </div>
         </div>
       </div>
-      {(repuesto.category || repuesto.brand) && (<FadeIn><SimilarProducts currentProductId={repuesto.id} productType="repuesto" category={repuesto.category} brand={repuesto.brand} limit={4} title="Repuestos Similares"/></FadeIn>)}
-      <div className="container mx-auto px-4 my-8 md:my-12 "><FadeIn><RecentlyViewedProducts title="Repuestos Vistos Recientemente"/></FadeIn></div>
+      {(electrodomestico.category || electrodomestico.brand) && (<FadeIn><SimilarProducts currentProductId={electrodomestico.id} productType="electrodomestico" category={electrodomestico.category} brand={electrodomestico.brand} limit={4} title="También Te Podría Interesar"/></FadeIn>)}
+      <div className="container mx-auto px-4 my-8 md:my-12"><FadeIn><RecentlyViewedProducts title="Visto Recientemente"/></FadeIn></div>
     </>
   );
 }
