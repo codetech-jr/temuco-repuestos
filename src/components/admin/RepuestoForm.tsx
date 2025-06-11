@@ -7,27 +7,31 @@ import { PulseLoader } from "react-spinners";
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface RepuestoFormData {
-  slug: string;
+  id?: string;
   name: string;
-  short_description?: string;
+  slug: string;
   price: number | string;
   original_price?: number | string;
-  image_url?: string;
+  stock?: number | string;
   category: string;
   brand: string;
-  is_original: boolean;
-  long_description?: string;
+  short_description?: string; // <-- AÑADE ESTA LÍNEA
+  long_description?: string;  // <-- Y ESTA LÍNEA
+  image_url?: string;
+  images?: string;
   features?: string;
   specifications?: string;
-  images?: string;
-  stock?: number | string;
+  is_original?: boolean;
   is_active: boolean;
-  id?: string;
   created_at?: string;
 }
 
 interface RepuestoFormProps {
-  initialData?: Partial<RepuestoFormData & { images?: string[] | string; features?: string[] | string }>;
+  initialData?: Omit<Partial<RepuestoFormData>, 'images' | 'features' | 'specifications'> & {
+    images?: string[] | string;
+    features?: string[] | string;
+    specifications?: any[] | string;
+  };
   onSubmit: (data: FormData, isFormDataIndeed: true) => Promise<boolean>;
   isEditing?: boolean;
 }
@@ -42,20 +46,20 @@ const parseNumberInput = (val: unknown, isInteger = false): number | undefined |
   return isNaN(num) ? (typeof val === 'string' ? val : String(val)) : num;
 };
 
+// En: src/components/admin/RepuestoForm.tsx
+
 const formSchema = z.object({
   name: z.string().min(3, "El nombre es muy corto"),
   slug: z.string().min(3, "El slug es muy corto").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug inválido"),
-  price: z.preprocess(parseNumberInput, z.number({ required_error: "El precio es requerido", invalid_type_error: "Precio debe ser número" }).positive("Precio debe ser positivo")),
+  price: z.preprocess(val => parseNumberInput(val), z.number({ required_error: "El precio es requerido", invalid_type_error: "Precio debe ser número" }).positive("Precio debe ser positivo")),
   category: z.string().min(1, "Categoría es requerida").refine(value => REPUESTO_CATEGORY_OPTIONS.includes(value), { message: "Seleccione categoría válida." }),
   brand: z.string().min(1, "Marca es requerida").refine(value => REPUESTO_BRAND_OPTIONS.includes(value), { message: "Seleccione marca válida." }),
   is_original: z.boolean().optional().default(false),
-  stock: z.preprocess(val => parseNumberInput(val, true), z.number({ invalid_type_error: "Stock debe ser entero" }).int("Stock debe ser entero").min(0, "Stock no puede ser negativo").optional().nullable()),
-  short_description: z.string().max(255, "Máx 255 caracteres").optional().nullable(),
-  original_price: z.preprocess(parseNumberInput, z.number({ invalid_type_error: "Precio original debe ser número" }).positive("Precio original debe ser positivo").optional().nullable()),
-  image_url: z.string().url("URL de imagen principal inválida").optional().nullable().or(z.literal('')),
-  features: z.string().optional().transform(val => val ? val.split(',').map(f => f.trim()).filter(f => f) : []),
-  specifications: z.string().optional().nullable(),
+  stock: z.preprocess(val => parseNumberInput(val, true), z.number({invalid_type_error: "Stock debe ser entero"}).int("Stock debe ser entero").min(0, "Stock no puede ser negativo").optional().nullable()),
+  original_price: z.preprocess(val => parseNumberInput(val, false), z.number({invalid_type_error: "Precio original debe ser número"}).positive("Precio original debe ser positivo").optional().nullable()),
+  image_url: z.string().url("URL de imagen principal (texto) inválida").optional().nullable().or(z.literal('')),
   images: z.string().optional().transform(val => val ? val.split(',').map(i => i.trim()).filter(i => i.length > 0 && /^https?:\/\/.+/.test(i)) : []),
+  description: z.string().optional().nullable(),
   is_active: z.boolean().optional().default(true),
 });
 

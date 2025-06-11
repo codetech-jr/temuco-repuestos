@@ -178,7 +178,7 @@ async function RepuestoListContent({ searchParams }: RepuestosPageProps) {
       </AnimatedGrid>
       {totalPages > 1 && (
         <FadeIn delay={0.4}>
-          <PaginationControls currentPage={currentPage} totalPages={totalPages} />
+          <PaginationControls currentPage={currentPage} totalPages={totalPages} itemsPerPage={ITEMS_PER_PAGE} />
         </FadeIn>
       )}
     </>
@@ -242,7 +242,6 @@ export default async function RepuestosPage({ searchParams }: RepuestosPageProps
         </FadeIn>
         
         <Suspense fallback={<RepuestoListSkeleton />}>
-          {/* @ts-expect-error Server Component */}
           <RepuestoListContent searchParams={searchParams} />
         </Suspense>
       </div>

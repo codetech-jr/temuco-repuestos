@@ -96,7 +96,7 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
                 link: getProductPath(productType, product.slug || product.id),
                 price: typeof product.price === 'string' ? parseFloat(product.price) : (product.price || 0),
               };
-              return <ProductCard key={product.id} product={productForCard} />;
+              return <ProductCard key={product.id} product={productForCard} productType="electrodomestico" />;
             })}
           </AnimatedGrid>
         </div>

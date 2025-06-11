@@ -60,7 +60,7 @@ const RecentlyViewedProducts: React.FC<{ title?: string }> = ({ title = "Vistos 
               };
               // La key se pasa directamente a ProductCard, AnimatedGrid se encarga del motion.div
               return (
-                 <ProductCard key={product.id} product={productForCard} />
+                 <ProductCard key={product.id} product={productForCard} productType="electrodomestico" />
               );
             })}
           </AnimatedGrid>

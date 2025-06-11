@@ -70,8 +70,10 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
             }}
             speed={8000}
             grabCursor={true}
-            freeMode={true}
-            freeModeMomentum={false}
+            freeMode={{
+              enabled: true,
+              momentum: false, // <-- Ahora se llama 'momentum' y va dentro del objeto
+            }}
             className="!pb-6 !pt-2"
             breakpoints={{
               640: { slidesPerView: 2.3, spaceBetween: 20 },
@@ -91,7 +93,10 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
               return (
                 <SwiperSlide key={apiProduct.id} className="!h-auto flex">
                   <div className="h-full w-full">
-                    <ProductCard product={productForCard} />
+                    <ProductCard
+                      product={productForCard}
+                      productType="electrodomestico" // <-- AÑADE ESTA LÍNEA CON UN VALOR FIJO
+                    />
                   </div>
                 </SwiperSlide>
               );

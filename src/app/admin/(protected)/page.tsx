@@ -1,6 +1,5 @@
 // src/app/admin/(protected)/page.tsx
-import Link from 'next/link';
-import { createClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 // ANIMACIÓN: Importamos los componentes de animación
@@ -8,7 +7,7 @@ import StaggeredFadeIn from '@/components/utils/StaggeredFadeIn';
 import DashboardCard from '@/components/admin/DashboardCard';
 
 export default async function AdminDashboardPage() {
-  const supabase = createClient();
+  const supabase = createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

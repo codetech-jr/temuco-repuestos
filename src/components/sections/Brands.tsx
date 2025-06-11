@@ -70,8 +70,10 @@ const Brands = () => {
             }}
             speed={6000} // Velocidad del desplazamiento
             grabCursor={true}
-            freeMode={true}
-            freeModeMomentum={false}
+            freeMode={{
+              enabled: true,
+              momentum: false, // <-- Ahora se llama 'momentum' y va dentro del objeto
+            }}
             className="!py-4"
           >
             {allBrands.map((brand, index) => (

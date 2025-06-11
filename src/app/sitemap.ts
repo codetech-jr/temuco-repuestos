@@ -22,7 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Obtener todos los slugs de electrodomésticos
   let electrodomesticosUrls: MetadataRoute.Sitemap = [];
   try {
-    const electroRes = await fetch(`${API_BASE_URL}/electrodomesticos?limit=10000`, { cache: 'no-store' }); // Límite alto para obtener todos
+    const electroRes = await fetch(`${API_BASE_URL}/electrodomesticos?limit=10000`); // Límite alto para obtener todos
     if (electroRes.ok) {
       const electroData = await electroRes.json();
       const items: Electrodomestico[] = electroData.data || [];

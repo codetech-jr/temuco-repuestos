@@ -23,7 +23,7 @@ const RatingStars: React.FC<{ rating: number }> = ({ rating }) => (
   </div>
 );
 
-const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => {
+const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; }> = ({ testimonial }) => {
   const innerContainerVariants = {
     hidden: { opacity: 0 },
     visible: {

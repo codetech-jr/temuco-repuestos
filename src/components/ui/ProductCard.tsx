@@ -12,7 +12,7 @@ export interface Product {
   name: string;
   imageUrl?: string;
   altText: string;
-  tag?: 'Oferta' | 'Nuevo' | 'Más Vendido';
+  tag?: 'Oferta' | 'Nuevo' | 'Más Vendido' | 'Original' | 'Alternativo';
   rating?: number;
   reviewCount?: number;
   price: number;
@@ -45,9 +45,14 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
     }).format(amount);
   };
 
-  const tagBgColor = product.tag === 'Oferta' ? 'bg-[#C8102E]' : 
-                    product.tag === 'Nuevo' ? 'bg-[#002A7F]' : 
-                    product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' : '';
+// LÍNEA 44 - Lógica de colores actual
+const tagBgColor = 
+          product.tag === 'Oferta' ? 'bg-[#C8102E]' : 
+          product.tag === 'Nuevo' ? 'bg-[#002A7F]' : 
+          product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' : 
+          product.tag === 'Original' ? 'bg-green-600' : // <-- AÑADIDO
+          product.tag === 'Alternativo' ? 'bg-gray-500' : // <-- AÑADIDO
+          '';
   const tagTextColor = 'text-[#F7FAFC]';
   const imageToDisplay = product.imageUrl || PLACEHOLDER_IMAGE_URL;
   const altTextToDisplay = product.altText || product.name || 'Imagen de producto';

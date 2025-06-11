@@ -5,7 +5,7 @@ import ElectrodomesticoForm from '@/components/admin/ElectrodomesticoForm';
 // Ya no necesitamos ElectrodomesticoFormData aquí si el form maneja su tipo interno
 // y onSubmit espera FormData
 import { useRouter } from 'next/navigation'; 
-import supabase from '@/lib/supabase/client'; // Asegúrate que la ruta a tu cliente Supabase sea correcta
+import{ supabase } from '@/lib/supabase/client'; // Asegúrate que la ruta a tu cliente Supabase sea correcta
 import toast from 'react-hot-toast';
 import { useState } from 'react'; // Para manejar el estado de error del formulario
 

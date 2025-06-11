@@ -6,6 +6,7 @@ interface ContactInfoItemProps {
   label?: string;
   text: string | React.ReactNode;
   href?: string;
+  className?: string; // <-- AÑADE ESTA LÍNEA
   // Permite pasar clases adicionales al contenedor principal del ítem
   containerClassName?: string;
   // Permite pasar clases adicionales específicamente al texto/enlace

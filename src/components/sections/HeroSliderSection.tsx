@@ -121,7 +121,6 @@ const HeroSliderSection = () => {
                 priority={index === 0}
                 quality={85}
                 sizes="(max-width: 768px) 100vw, 100vw" // Simplificado para que siempre cubra
-                priority
                 // ANIMACIÓN: La clase `swiper-slide-active` es la clave. La usamos en el CSS global.
               />
               <div className="absolute inset-0 flex flex-col justify-center items-center bg-[#002266]/60 text-[#F7FAFC] p-4 md:p-8 text-center">

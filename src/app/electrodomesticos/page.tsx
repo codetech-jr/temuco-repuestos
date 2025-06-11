@@ -174,7 +174,7 @@ async function ElectrodomesticosListContent({ searchParams }: ElectrodomesticosP
               reviewCount: product.review_count || 0,
               price: product.price,
               originalPrice: product.original_price,
-              tag: product.tag,
+              tag: product.tag as 'Oferta' | 'Nuevo' | 'Más Vendido' | undefined,
               link: `/electrodomesticos/${product.slug}`,
             }}
             productType="electrodomestico"
@@ -186,6 +186,7 @@ async function ElectrodomesticosListContent({ searchParams }: ElectrodomesticosP
           <PaginationControls
             currentPage={currentPage}
             totalPages={totalPages}
+            itemsPerPage={ITEMS_PER_PAGE}
           />
         </FadeIn>
       )}
@@ -249,7 +250,6 @@ export default async function ElectrodomesticosPage({ searchParams }: Electrodom
         </FadeIn>
         
         <Suspense fallback={<ElectrodomesticosListSkeleton />}>
-          {/* @ts-expect-error Server Component */}
           <ElectrodomesticosListContent searchParams={searchParams} />
         </Suspense>
         

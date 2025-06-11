@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 // RepuestoFormData (de RepuestoForm) es la interfaz que el FORMULARIO usa para su estado y initialData
 import RepuestoForm, { RepuestoFormData } from '@/components/admin/RepuestoForm';
-import supabase from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -71,7 +71,7 @@ function adaptApiDataToInitialFormData(apiData: RepuestoFromAPI): Partial<Repues
     // images: Array.isArray(apiData.images) ? apiData.images.join(', ') : (typeof apiData.images === 'string' ? apiData.images : ''),
     // Si tu RepuestoForm puede tomar directamente el array de URLs para inicializar sus previews de 'additionalImagesPreview':
     // (Esto es mejor si RepuestoForm maneja la inicialización de additionalImagesPreview desde un array de URLs)
-    images: Array.isArray(apiData.images) ? apiData.images : (typeof apiData.images === 'string' ? apiData.images.split(',').map(s=>s.trim()).filter(s=>s) : undefined),
+    images: Array.isArray(apiData.images) ? apiData.images.join(', ') : (typeof apiData.images === 'string' ? apiData.images : ''),
     
     created_at: apiData.created_at, // No es un campo de formulario pero puede ser útil
   };

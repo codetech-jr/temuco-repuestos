@@ -16,7 +16,11 @@ export interface ElectrodomesticoFormData {
 }
 
 interface ElectrodomesticoFormProps {
-  initialData?: Partial<ElectrodomesticoFormData & { images?: string[] | string; features?: string[] | string; specifications?: any[] | string }>;
+  initialData?: Omit<Partial<ElectrodomesticoFormData>, 'images' | 'features' | 'specifications'> & {
+    images?: string[] | string;
+    features?: string[] | string;
+    specifications?: any[] | string;
+  };
   onSubmit: (data: FormData, isFormDataIndeed: true) => Promise<boolean>;
   isEditing?: boolean;
 }
@@ -31,21 +35,23 @@ const parseNumberInput = (val: unknown, isInteger = false): number | undefined |
   return isNaN(num) ? (typeof val === 'string' ? val : String(val)) : num;
 };
 
+// En: src/components/admin/ElectrodomesticoForm.tsx
+
 const formSchema = z.object({
   name: z.string().min(3, "El nombre es muy corto"),
   slug: z.string().min(3, "El slug es muy corto").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug inválido"),
-  price: z.preprocess(parseNumberInput, z.number({ required_error: "El precio es requerido", invalid_type_error: "Precio debe ser número" }).positive("Precio debe ser positivo")),
+  price: z.preprocess(val => parseNumberInput(val), z.number({ required_error: "El precio es requerido", invalid_type_error: "Precio debe ser número" }).positive("Precio debe ser positivo")),
   category: z.string().min(1, "Categoría es requerida").refine(val => CATEGORY_OPTIONS.includes(val), { message: "Seleccione categoría válida." }),
   brand: z.string().min(1, "Marca es requerida").refine(val => BRAND_OPTIONS.includes(val), { message: "Seleccione marca válida." }),
   stock: z.preprocess(val => parseNumberInput(val, true), z.number({invalid_type_error: "Stock debe ser entero"}).int("Stock debe ser entero").min(0, "Stock no puede ser negativo").optional().nullable()),
   short_description: z.string().max(255, "Max 255 caracteres").optional().nullable(),
-  original_price: z.preprocess(parseNumberInput, z.number({invalid_type_error: "Precio original debe ser número"}).positive("Precio original debe ser positivo").optional().nullable()),
+  original_price: z.preprocess(val => parseNumberInput(val, false), z.number({invalid_type_error: "Precio original debe ser número"}).positive("Precio original debe ser positivo").optional().nullable()),
   image_url: z.string().url("URL de imagen principal (texto) inválida").optional().nullable().or(z.literal('')),
   features: z.string().optional().transform(val => val ? val.split(',').map(f => f.trim()).filter(f => f) : []),
   specifications: z.string().optional().nullable().transform(val => { try { const parsed = JSON.parse(val || '[]'); return Array.isArray(parsed) ? parsed : []; } catch { return []; } }),
   images: z.string().optional().transform(val => val ? val.split(',').map(i => i.trim()).filter(i => i.length > 0 && /^https?:\/\/.+/.test(i)) : []),
   is_active: z.boolean().optional().default(true),
-  rating: z.preprocess(parseNumberInput, z.number({invalid_type_error: "Rating debe ser número"}).min(0).max(5).optional().nullable()),
+  rating: z.preprocess(val => parseNumberInput(val, false), z.number({invalid_type_error: "Rating debe ser número"}).min(0).max(5).optional().nullable()),
   review_count: z.preprocess(val => parseNumberInput(val, true), z.number({invalid_type_error: "Conteo reseñas debe ser entero"}).int().min(0).optional().nullable()),
   long_description: z.string().optional().nullable(),
 });
