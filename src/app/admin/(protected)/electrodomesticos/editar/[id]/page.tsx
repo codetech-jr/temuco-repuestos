@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import ElectrodomesticoForm, { ElectrodomesticoFormData } from '@/components/admin/ElectrodomesticoForm';
-import { supabase } from '@/lib/supabase/client';
+import supabase from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
