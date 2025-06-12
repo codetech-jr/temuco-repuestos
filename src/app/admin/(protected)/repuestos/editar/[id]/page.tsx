@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import RepuestoForm, { RepuestoFormData } from '@/components/admin/RepuestoForm';
-import { supabase } from '@/lib/supabase/client';
+import supabase from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -49,20 +49,6 @@ function adaptApiDataToInitialFormData(apiData: RepuestoFromAPI): Partial<Repues
       ? apiData.specifications 
       : (apiData.specifications ? JSON.stringify(apiData.specifications, null, 2) : ''),
     image_url: apiData.image_url || '', 
-<<<<<<< HEAD
-
-    // `images` para RepuestoForm:
-    // Si tu RepuestoForm espera un string separado por comas para `initialData.images` (para un textarea opcional):
-    // images: Array.isArray(apiData.images) ? apiData.images.join(', ') : (typeof apiData.images === 'string' ? apiData.images : ''),
-    // Si tu RepuestoForm puede tomar directamente el array de URLs para inicializar sus previews de 'additionalImagesPreview':
-    // (Esto es mejor si RepuestoForm maneja la inicialización de additionalImagesPreview desde un array de URLs)
-    images: Array.isArray(apiData.images) ? apiData.images.join(', ') : (typeof apiData.images === 'string' ? apiData.images : ''),
-    
-    created_at: apiData.created_at, // No es un campo de formulario pero puede ser útil
-=======
-    images: Array.isArray(apiData.images) ? apiData.images : (typeof apiData.images === 'string' ? apiData.images.split(',').map(s=>s.trim()).filter(s=>s) : undefined),
-    created_at: apiData.created_at,
->>>>>>> 01fbc02198e4e5c9f461a4b0daceabe5f1953891
   };
 }
 

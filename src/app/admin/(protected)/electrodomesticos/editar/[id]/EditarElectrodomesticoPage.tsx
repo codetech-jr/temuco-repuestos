@@ -1,13 +1,15 @@
+// En: src/app/admin/(protected)/electrodomesticos/editar/[id]/EditarElectrodomesticoPage.tsx
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation'; // <-- Importamos useParams
 import ElectrodomesticoForm, { ElectrodomesticoFormData } from '@/components/admin/ElectrodomesticoForm';
-import supabase from '@/lib/supabase/client';
+import supabase from '@/lib/supabase/client'; // <-- Importamos la instancia, no createClient
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
+// Esta interfaz se mantiene igual
 export interface ElectrodomesticoFromAPI {
   id: string;
   slug: string;
@@ -29,6 +31,7 @@ export interface ElectrodomesticoFromAPI {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
+// Esta función se mantiene igual
 function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partial<ElectrodomesticoFormData> {
   return {
     id: apiData.id,
@@ -56,12 +59,14 @@ function adaptApiDataToInitialFormData(apiData: ElectrodomesticoFromAPI): Partia
   };
 }
 
-type Props = {
-  id: string;
-};
+// Ya no necesitamos la interfaz de Props
+// type Props = { id: string; };
 
-export default function EditarElectrodomesticoPage({ id }: Props) {
+export default function EditarElectrodomesticoPage() { // <-- Ya no recibe props
   const router = useRouter();
+  const params = useParams(); // <-- Obtenemos los parámetros de la URL
+  const id = Array.isArray(params.id) ? params.id[0] : params.id; // <-- Extraemos el ID
+
   const [initialData, setInitialData] = useState<Partial<ElectrodomesticoFormData> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,9 +74,9 @@ export default function EditarElectrodomesticoPage({ id }: Props) {
 
   useEffect(() => {
     if (!id) {
-      setError("ID no válido.");
-      setLoading(false);
-      toast.error("ID no válido.");
+      // Este caso solo ocurriría si el componente se renderiza fuera de la ruta esperada
+      setError("Cargando ID...");
+      setLoading(true);
       return;
     }
 
@@ -97,7 +102,7 @@ export default function EditarElectrodomesticoPage({ id }: Props) {
       }
     };
     fetchElectrodomestico();
-  }, [id]);
+  }, [id]); // <-- El useEffect ahora depende del 'id' que obtenemos del hook
 
   const handleUpdate = async (data: FormData): Promise<boolean> => {
     setFormSubmitError(null);
@@ -130,6 +135,10 @@ export default function EditarElectrodomesticoPage({ id }: Props) {
       router.refresh();
       return true;
     } catch (err: unknown) {
+      console.error('Submit error', err);
+      toast.dismiss(loadingToastId);
+      toast.error('Ocurrió un error inesperado al actualizar.');
+      setFormSubmitError('Ocurrió un error inesperado.');
       return false;
     }
   };

@@ -15,12 +15,6 @@ const nextConfig = {
       },
       // Añade aquí cualquier otro dominio de imágenes que necesites
     ],
-      eslint: {
-    ignoreDuringBuilds: true,
-  },
-  experimental: {
-    typedRoutes: false,
-  },
   },
 };
 

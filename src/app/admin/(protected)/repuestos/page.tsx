@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState, useCallback, ChangeEvent } from 'react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { supabase } from '@/lib/supabase/client';
+import supabase from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
