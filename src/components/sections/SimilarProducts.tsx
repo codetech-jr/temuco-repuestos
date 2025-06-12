@@ -1,8 +1,11 @@
+// src/components/sections/SimilarProducts.tsx
 "use client";
 
 import { useMemo } from 'react';
 import useFetchData from '@/hooks/useFetchData';
-import ProductCard, { Product as ProductCardType } from '@/components/ui/ProductCard';
+// Las importaciones de tipos ya están correctas, ¡genial!
+import ProductCard from '@/components/ui/ProductCard';
+import type { ProductForCard } from '@/types/product';
 import { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker';
 import FadeIn from '@/components/utils/FadeIn';
 import AnimatedGrid from '@/components/utils/AnimatedGrid';
@@ -74,8 +77,8 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
     }
   }, [fetchedProducts, currentProductId, limit]);
 
-  const getProductPath = (productType: string, slugOrId: string) => 
-    `/${productType === 'electrodomestico' ? 'electrodomesticos' : 'repuestos'}/${slugOrId}`;
+  const getProductPath = (prodType: 'electrodomestico' | 'repuesto', slugOrId: string) => 
+    `/${prodType === 'electrodomestico' ? 'electrodomesticos' : 'repuestos'}/${slugOrId}`;
 
   if (loading || error || !products.length) return null;
 
@@ -88,15 +91,28 @@ const SimilarProducts: React.FC<SimilarProductsProps> = ({
           </h2>
           <AnimatedGrid>
             {products.map((product) => {
-              const productForCard: ProductCardType = {
+              // ----- CORRECCIÓN #1: Usa el tipo importado 'ProductForCard' -----
+              const productForCard: ProductForCard = {
                 id: product.id,
                 name: product.name,
                 imageUrl: product.image_url || '/images/placeholder-product.png',
                 altText: product.name,
                 link: getProductPath(productType, product.slug || product.id),
                 price: typeof product.price === 'string' ? parseFloat(product.price) : (product.price || 0),
+                // Añadimos las props opcionales para que el tipo coincida
+                originalPrice: undefined,
+                tag: undefined,
+                rating: undefined,
+                reviewCount: undefined,
               };
-              return <ProductCard key={product.id} product={productForCard} productType="electrodomestico" />;
+              return (
+                <ProductCard 
+                  key={product.id} 
+                  product={productForCard} 
+                  // ----- CORRECCIÓN #2: Usa la prop del componente, no un valor fijo -----
+                  productType={productType} 
+                />
+              );
             })}
           </AnimatedGrid>
         </div>

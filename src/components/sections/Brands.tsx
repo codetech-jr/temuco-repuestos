@@ -20,7 +20,7 @@ interface Brand {
 }
 
 const brandsData: Brand[] = [
-  { id: 'brand1', name: 'Freeze Refrigeración', logoUrl: '/img/freeze-logo.png', altText: 'Logo de Freeze Refrigeración' },
+  { id: 'brand1', name: 'Freeze Refrigeración', logoUrl: '/img/brands/freeze-logo.png', altText: 'Logo de Freeze Refrigeración' },
   { id: 'brand2', name: 'Pegatanke', logoUrl: '/img/brands/pegatanke-logo.png', altText: 'Logo de Pegatanke' },
   { id: 'brand3', name: 'Coverca', logoUrl: '/img/brands/coverca-logo.png', altText: 'Logo de Coverca' },
   { id: 'brand4', name: 'RUN', logoUrl: '/img/brands/run-logo.png', altText: 'Logo de Run' },

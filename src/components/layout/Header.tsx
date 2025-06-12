@@ -13,7 +13,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WishlistNavItem } from "./WishlistNavItem"; 
 import PredictiveSearchBar from "../catalog/PredictiveSearchBar"; 
 
-import logoImage from "../../../public/img/logo/logo-temuco-final.png";
 import { serviciosDetalleData } from "@/app/data/servicios";
 
 // --- Interfaces y datos (sin cambios) ---
@@ -109,7 +108,7 @@ const Header = () => {
     <header className="bg-[#F7FAFC] shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center" onClick={() => setIsMobileMenuOpen(false)}>
-          <Image src={logoImage} alt="Temuco Logo" width={120} height={40} priority />
+          <Image src="/img/logo/logo-temuco-final.png" alt="Temuco Logo" width={120} height={40} priority />
         </Link>
 
         {/* Navegación Principal (Desktop) - AHORA CON HEADLESS UI */}

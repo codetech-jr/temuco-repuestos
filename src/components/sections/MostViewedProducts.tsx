@@ -1,18 +1,20 @@
-// En src/components/sections/MostViewedProducts.tsx
+/// En src/components/sections/MostViewedProducts.tsx
 "use client";
 
 import { useMemo } from 'react';
-import ProductCard, { Product as ProductCardType } from '@/components/ui/ProductCard';
+import ProductCard from '@/components/ui/ProductCard';
+// Los tipos correctos ya están importados, ¡genial!
+import type { ProductFromAPI, ProductForCard } from '@/types/product'; 
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, FreeMode } from 'swiper/modules';
 import useFetchData from '@/hooks/useFetchData';
-// ANIMACIÓN: Importamos motion
 import { motion } from 'framer-motion';
 
 import 'swiper/css';
 import 'swiper/css/autoplay';
 import 'swiper/css/free-mode';
 
+// Esta interfaz local para la API está perfecta.
 interface ApiProductRecommendation {
   id: string;
   slug?: string;
@@ -35,16 +37,11 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
 
   const { data: products, loading, error } = useFetchData<ApiProductRecommendation[]>(apiUrl, [totalItems]);
 
-  // Los estados de loading, error y no-products no cambian...
-
   if (loading || error || !products || products.length < 2) {
-    // Aquí irían tus componentes de loading, error y no-products...
-    // Por brevedad, los omitimos en este bloque de código.
-    return null; // O el JSX correspondiente
+    return null; // O tu JSX de carga/error
   }
 
   return (
-    // ANIMACIÓN: La sección aparece suavemente al hacer scroll
     <motion.section 
       className="py-12 md:py-16 bg-gray-50"
       initial={{ opacity: 0, y: 50 }}
@@ -56,24 +53,17 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
         <h2 className="text-3xl font-bold text-center text-[#002A7F] mb-10 md:mb-12">
           Nuestros Productos y Repuestos Más Vistos
         </h2>
-        {/* ANIMACIÓN: El contenedor del carrusel tiene un `group` para la animación de pausa */}
         <div className="relative group">
           <Swiper
+            // Tu configuración de Swiper está excelente
             modules={[Autoplay, FreeMode]}
             loop={products.length >= DESKTOP_ITEMS_PER_VIEW}
             slidesPerView={1.3}
             spaceBetween={16}
-            autoplay={{ 
-              delay: 1, 
-              disableOnInteraction: false, 
-              pauseOnMouseEnter: true 
-            }}
+            autoplay={{ delay: 1, disableOnInteraction: false, pauseOnMouseEnter: true }}
             speed={8000}
             grabCursor={true}
-            freeMode={{
-              enabled: true,
-              momentum: false, // <-- Ahora se llama 'momentum' y va dentro del objeto
-            }}
+            freeMode={{ enabled: true, momentum: false }}
             className="!pb-6 !pt-2"
             breakpoints={{
               640: { slidesPerView: 2.3, spaceBetween: 20 },
@@ -82,20 +72,26 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
             }}
           >
             {products.map((apiProduct) => {
-              const productForCard: ProductCardType = {
+              // ----- CORRECCIÓN #1: Usa el tipo importado 'ProductForCard' -----
+              const productForCard: ProductForCard = {
                 id: apiProduct.id,
                 name: apiProduct.name,
                 imageUrl: apiProduct.image_url || PLACEHOLDER_IMAGE_URL,
                 altText: apiProduct.name,
                 link: `/${apiProduct.product_type === 'electrodomestico' ? 'electrodomesticos' : 'repuestos'}/${apiProduct.slug || apiProduct.id}`,
                 price: parseFloat(apiProduct.price),
+                // Añadimos las props opcionales para que el tipo coincida perfectamente
+                tag: undefined, 
+                rating: undefined,
+                reviewCount: undefined,
               };
               return (
                 <SwiperSlide key={apiProduct.id} className="!h-auto flex">
                   <div className="h-full w-full">
                     <ProductCard
                       product={productForCard}
-                      productType="electrodomestico" // <-- AÑADE ESTA LÍNEA CON UN VALOR FIJO
+                      // ----- CORRECCIÓN #2: Usa el tipo del producto de la API -----
+                      productType={apiProduct.product_type}
                     />
                   </div>
                 </SwiperSlide>
@@ -103,7 +99,6 @@ const MostViewedProducts: React.FC<{ totalItems?: number }> = ({ totalItems = 8 
             })}
           </Swiper>
           
-          {/* ANIMACIÓN: Overlays a los lados que aparecen cuando el carrusel está en pausa */}
           <div className="absolute top-0 bottom-0 left-0 w-24 bg-gradient-to-r from-gray-50 to-transparent opacity-100 transition-opacity duration-300 pointer-events-none group-hover:opacity-0" />
           <div className="absolute top-0 bottom-0 right-0 w-24 bg-gradient-to-l from-gray-50 to-transparent opacity-100 transition-opacity duration-300 pointer-events-none group-hover:opacity-0" />
         </div>

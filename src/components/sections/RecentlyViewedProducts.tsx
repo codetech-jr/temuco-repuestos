@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import ProductCard, { Product as ProductCardType } from '@/components/ui/ProductCard';
+import ProductCard from '@/components/ui/ProductCard';
+// Los tipos correctos ya están aquí, ¡solo hay que usarlos bien!
+import type { ProductFromAPI, ProductForCard } from '@/types/product'; 
 import { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker';
 
-// ANIMACIÓN: Importamos los componentes necesarios
 import FadeIn from '@/components/utils/FadeIn';
 import AnimatedGrid from '@/components/utils/AnimatedGrid';
 
@@ -39,7 +40,6 @@ const RecentlyViewedProducts: React.FC<{ title?: string }> = ({ title = "Vistos 
   }
 
   return (
-    // ANIMACIÓN: La sección entera aparece suavemente al hacer scroll
     <FadeIn>
       <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
@@ -47,20 +47,30 @@ const RecentlyViewedProducts: React.FC<{ title?: string }> = ({ title = "Vistos 
             {title}
           </h2>
           
-          {/* ANIMACIÓN: La rejilla de productos aparece en cascada */}
           <AnimatedGrid>
             {recentProducts.map((product) => {
-              const productForCard: ProductCardType = {
+              // ----- CORRECCIÓN #1: Usa el tipo importado 'ProductForCard' -----
+              const productForCard: ProductForCard = {
                 id: product.id,
                 name: product.name,
                 imageUrl: product.image_url,
                 altText: product.name,
                 link: `/${product.product_type === 'electrodomestico' ? 'electrodomesticos' : 'repuestos'}/${product.slug || product.id}`,
                 price: product.price,
+                // Añadimos las props opcionales como undefined para que coincida el tipo
+                originalPrice: undefined,
+                tag: undefined,
+                rating: undefined,
+                reviewCount: undefined,
               };
-              // La key se pasa directamente a ProductCard, AnimatedGrid se encarga del motion.div
+              
               return (
-                 <ProductCard key={product.id} product={productForCard} productType="electrodomestico" />
+                 <ProductCard 
+                    key={product.id} 
+                    product={productForCard} 
+                    // ----- CORRECCIÓN #2: Usa el tipo del producto guardado -----
+                    productType={product.product_type} 
+                 />
               );
             })}
           </AnimatedGrid>

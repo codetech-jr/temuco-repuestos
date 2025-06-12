@@ -27,7 +27,6 @@ interface PredictiveSearchBarProps {
 const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: PredictiveSearchBarProps) => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [correction, setCorrection] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -35,31 +34,16 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchSuggestions = useDebouncedCallback(async (searchTerm: string) => {
-    setCorrection(null);
-
     if (searchTerm.length < 3) {
       setSuggestions([]);
       setIsLoading(false);
-      setIsDropdownOpen(searchTerm.length >= 3);
+      setIsDropdownOpen(false);
       return;
     }
 
     try {
       const { data: suggestionData } = await apiClient.get<Suggestion[]>(`/search/suggestions?q=${searchTerm}`);
-      
-      if (suggestionData.length > 0) {
-        setSuggestions(suggestionData);
-      } else {
-        setSuggestions([]);
-        try {
-          const { data: spellcheckData } = await apiClient.get<{ suggestion: string | null }>(`/search/spellcheck?q=${searchTerm}`);
-          if (spellcheckData.suggestion && spellcheckData.suggestion.toLowerCase() !== searchTerm.toLowerCase()) {
-            setCorrection(spellcheckData.suggestion);
-          }
-        } catch (spellcheckError) {
-          console.error('Error fetching spelling suggestion:', spellcheckError);
-        }
-      }
+      setSuggestions(suggestionData);
       setIsDropdownOpen(true);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -77,11 +61,10 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
       setSuggestions([]);
       setIsLoading(false);
       setIsDropdownOpen(false);
-      setCorrection(null);
       return;
     }
     setIsLoading(true);
-    setIsDropdownOpen(true);
+    setIsDropdownOpen(value.length >= 3);
     fetchSuggestions(value);
   };
 
@@ -91,7 +74,6 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
       router.push(`/search?q=${encodeURIComponent(query.trim())}`);
       setIsDropdownOpen(false);
       setSuggestions([]);
-      setCorrection(null);
       if (onSearch) onSearch();
     }
   };
@@ -101,7 +83,6 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
     setSuggestions([]);
     setIsLoading(false);
     setIsDropdownOpen(false);
-    setCorrection(null);
   };
   
   useEffect(() => {
@@ -223,17 +204,6 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
                     </motion.li>
                   ))}
                 </motion.ul>
-              ) : correction ? (
-                <motion.div key="correction" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 text-sm text-gray-600">
-                  Quizás quisiste decir:{" "}
-                  <Link 
-                    href={`/search?q=${encodeURIComponent(correction)}`} 
-                    onClick={() => { setIsDropdownOpen(false); if (onSearch) onSearch(); }}
-                    className="font-semibold text-[#002A7F] hover:underline"
-                  >
-                    {correction}
-                  </Link>
-                </motion.div>
               ) : query.length >= 3 ? (
                 <motion.div key="no-suggestions" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-4 text-center text-gray-500">
                   No se encontraron sugerencias.

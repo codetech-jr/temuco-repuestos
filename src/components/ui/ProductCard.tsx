@@ -1,4 +1,5 @@
 // src/components/ui/ProductCard.tsx
+
 "use client";
 
 import Image from 'next/image';
@@ -6,26 +7,14 @@ import Link from 'next/link';
 import RatingStars from './RatingStars';
 import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import apiClient from '@/app/api/axiosClient';
-
-export interface Product {
-  id: string;
-  name: string;
-  imageUrl?: string;
-  altText: string;
-  tag?: 'Oferta' | 'Nuevo' | 'Más Vendido' | 'Original' | 'Alternativo';
-  rating?: number;
-  reviewCount?: number;
-  price: number;
-  originalPrice?: number;
-  link: string;
-}
+import type { ProductForCard } from '@/types/product';
 
 interface ProductCardProps {
-  product: Product;
+  product: ProductForCard;
   productType: 'electrodomestico' | 'repuesto';
 }
 
-const PLACEHOLDER_IMAGE_URL = '/images/placeholder-product.png';
+const PLACEHOLDER_IMAGE_URL = '/images/placeholder/product-placeholder.png';
 
 const ProductCard = ({ product, productType }: ProductCardProps) => {
   const handleProductClick = () => {
@@ -45,15 +34,15 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
     }).format(amount);
   };
 
-// LÍNEA 44 - Lógica de colores actual
-const tagBgColor = 
+  const tagBgColor = 
           product.tag === 'Oferta' ? 'bg-[#C8102E]' : 
           product.tag === 'Nuevo' ? 'bg-[#002A7F]' : 
           product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' : 
-          product.tag === 'Original' ? 'bg-green-600' : // <-- AÑADIDO
-          product.tag === 'Alternativo' ? 'bg-gray-500' : // <-- AÑADIDO
+          product.tag === 'Original' ? 'bg-green-600' :
+          product.tag === 'Alternativo' ? 'bg-gray-500' :
           '';
   const tagTextColor = 'text-[#F7FAFC]';
+  
   const imageToDisplay = product.imageUrl || PLACEHOLDER_IMAGE_URL;
   const altTextToDisplay = product.altText || product.name || 'Imagen de producto';
 
@@ -77,10 +66,8 @@ const tagBgColor =
             src={imageToDisplay}
             alt={altTextToDisplay}
             fill
-            objectFit="cover"
-            className="group-hover:scale-105 transition-transform duration-300 ease-in-out"
             sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            priority={false}
+            className="group-hover:scale-105 transition-transform duration-300 ease-in-out object-cover"
           />
           {product.tag && tagBgColor && (
             <span

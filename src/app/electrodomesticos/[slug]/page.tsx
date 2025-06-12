@@ -1,14 +1,29 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import WhatsAppButton from '@/components/ui/WhatsAppButton';
 import ProductViewTracker, { RecentlyViewedProductInfo } from '@/components/tracking/ProductViewTracker';
-import RecentlyViewedProducts from '@/components/sections/RecentlyViewedProducts';
-import SimilarProducts from '@/components/sections/SimilarProducts';
 import { ShareButtons } from '@/components/products/ShareButtons';
 import type { Metadata, ResolvingMetadata } from 'next';
 import FadeIn from '@/components/utils/FadeIn';
 import StaggeredFadeIn from '@/components/utils/StaggeredFadeIn';
+
+const RecentlyViewedProducts = dynamic(
+  () => import('@/components/sections/RecentlyViewedProducts'),
+  { 
+    ssr: false, 
+    loading: () => <div className="h-64 bg-gray-200 animate-pulse rounded-lg" /> 
+  }
+);
+
+const SimilarProducts = dynamic(
+  () => import('@/components/sections/SimilarProducts'),
+  { 
+    ssr: false, 
+    loading: () => <div className="h-64 bg-gray-200 animate-pulse rounded-lg" /> 
+  }
+);
 
 export interface Electrodomestico {
   id: string;

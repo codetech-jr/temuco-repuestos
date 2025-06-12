@@ -2,14 +2,18 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade } from 'swiper/modules';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import FadeIn from '@/components/utils/FadeIn';
 import AnimatedList from '@/components/utils/AnimatedList';
 
-import 'swiper/css';
-import 'swiper/css/effect-fade';
+const QuienesSomosCarousel = dynamic(
+  () => import('@/components/sections/QuienesSomosCarousel'),
+  { 
+    ssr: false,
+    loading: () => <div className="h-64 md:h-80 lg:h-96 rounded-lg bg-gray-200 animate-pulse"></div>
+  }
+);
 
 const nuestraHistoria = `
   Fundada en el año 2000, Temuco nació con la visión de ofrecer soluciones integrales y de calidad para las necesidades de refrigeración y electrodomésticos en la región de Los Valles del Tuy.
@@ -63,7 +67,6 @@ const carruselImages = [
   { src: "/img/team/team-9.jpg", alt: "Equipo de Temuco Repuestos trabajando" },
 ];
 
-
 export default function QuienesSomosPage() {
   return (
     <div className="bg-[#F7FAFC] py-12 md:py-16">
@@ -92,31 +95,7 @@ export default function QuienesSomosPage() {
               </div>
             </motion.div>
             <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: 'easeOut', delay: 0.2 }}>
-              <div className="relative h-64 md:h-80 lg:h-96 rounded-lg overflow-hidden shadow-xl">
-                <Swiper
-                  modules={[Autoplay, EffectFade]}
-                  spaceBetween={0}
-                  slidesPerView={1}
-                  loop={true}
-                  effect="fade"
-                  fadeEffect={{ crossFade: true }}
-                  autoplay={{ delay: 4000, disableOnInteraction: false }}
-                  className="w-full h-full"
-                >
-                  {carruselImages.map((image, index) => (
-                    <SwiperSlide key={index}>
-                      <Image
-                        src={image.src}
-                        alt={image.alt}
-                        fill
-                        objectFit="cover"
-                        priority={index === 0}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
+              <QuienesSomosCarousel images={carruselImages} />
             </motion.div>
           </div>
         </section>
@@ -159,7 +138,7 @@ export default function QuienesSomosPage() {
               <div key={miembro.nombre} className="bg-white p-6 rounded-lg shadow-lg text-center max-w-xs w-full flex flex-col items-center transform transition-transform duration-300 hover:scale-105">
                 {miembro.imageUrl && (
                   <div className="relative w-32 h-32 mx-auto rounded-full overflow-hidden mb-4 shadow-md">
-                    <Image src={miembro.imageUrl} alt={miembro.nombre} fill objectFit="cover" priority/>
+                    <Image src={miembro.imageUrl || '/images/placeholder/avatar-male.png'} alt={miembro.nombre} fill objectFit="cover" priority/>
                   </div>
                 )}
                 <h3 className="text-xl font-semibold text-[#002A7F] mb-1">{miembro.nombre}</h3>

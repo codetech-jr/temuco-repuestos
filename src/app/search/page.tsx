@@ -1,15 +1,18 @@
-// En: src/app/search/page.tsx
+// src/app/search/page.tsx
 
 import { Suspense } from 'react';
-import SearchResults from '@/components/search/SearchResult'; // Ajusta la ruta si es necesario
+// ¡Corrección clave! La importación debe coincidir con el nombre y la ruta del archivo.
+import SearchResults from '@/components/search/SearchResult'; 
 
-// Este componente ahora es un Server Component, lo que es bueno para SEO.
+// Este componente es un Server Component, lo que es bueno para el SEO inicial.
 export default function SearchPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-4 sr-only">Resultados de Búsqueda</h1>
+      {/* Título invisible para lectores de pantalla, mejora la accesibilidad */}
+      <h1 className="sr-only">Resultados de Búsqueda</h1>
       
-      <Suspense fallback={<div className="text-center p-10">Cargando...</div>}>
+      {/* Suspense muestra un 'fallback' mientras el componente de cliente carga y obtiene datos */}
+      <Suspense fallback={<div className="text-center p-10">Cargando resultados...</div>}>
         <SearchResults />
       </Suspense>
       

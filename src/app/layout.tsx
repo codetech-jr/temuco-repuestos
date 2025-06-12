@@ -23,6 +23,9 @@ const openSans = Open_Sans({
 export const metadata: Metadata = {
   title: "Temuco Repuestos y Servicios",
   description: "En Temuco encuentra repuestos originales, electrodomésticos de las mejores marcas y servicio técnico especializado para la reparación de tus aparatos. ¡Soluciones para tu hogar!",
+  icons: {
+    icon: '/icon.ico', // Le decimos explícitamente que use este archivo
+  },
 };
 
 export default function RootLayout({
