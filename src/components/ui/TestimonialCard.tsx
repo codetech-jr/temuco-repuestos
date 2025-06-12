@@ -1,7 +1,7 @@
 // En src/components/ui/TestimonialCard.tsx
 "use client";
 
-import { motion, Variants } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import Image from 'next/image';
 import { FaStar, FaRegStar, FaQuoteLeft } from 'react-icons/fa';
 
@@ -12,7 +12,6 @@ export interface Testimonial {
   authorDetail: string;
   rating: number;
   avatarUrl: string;
-  variants?: Variants;
 }
 
 const RatingStars: React.FC<{ rating: number }> = ({ rating }) => (
@@ -24,7 +23,7 @@ const RatingStars: React.FC<{ rating: number }> = ({ rating }) => (
 );
 
 const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; }> = ({ testimonial }) => {
-  const innerContainerVariants = {
+  const innerContainerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -32,14 +31,13 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; 
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 15 },
     visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120 } },
   };
 
   return (
     <motion.div
-      variants={testimonial.variants}
       className="bg-[#F7FAFC] text-gray-800 rounded-lg shadow-xl p-6 md:p-8 flex flex-col h-full relative overflow-hidden"
       whileHover={{ y: -8, boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)" }}
       transition={{ type: 'spring', stiffness: 300 }}
@@ -64,18 +62,16 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; 
         </motion.div>
         
         <motion.p variants={itemVariants} className="text-gray-600 mb-6 flex-grow italic">
-          "{testimonial.quote}"
+          {`"{testimonial.quote}"`}
         </motion.p>
         
-        {/* --- SECCIÓN CORREGIDA --- */}
         <motion.div variants={itemVariants} className="flex items-center mt-auto pt-4 border-t border-gray-200">
-          {/* El componente Image ahora tiene las clases de estilo directamente */}
           <Image
             src={testimonial.avatarUrl}
             alt={testimonial.authorName}
-            width={56} // Usamos width y height para un mejor control y evitar layout shifts
+            width={56}
             height={56}
-            className="rounded-full object-cover mr-4" // Clases para darle forma y margen
+            className="rounded-full object-cover mr-4"
             priority
           />
           <div>
@@ -83,7 +79,6 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; 
             <p className="text-sm text-gray-500">{testimonial.authorDetail}</p>
           </div>
         </motion.div>
-        {/* --- FIN DE LA SECCIÓN CORREGIDA --- */}
       </motion.div>
     </motion.div>
   );

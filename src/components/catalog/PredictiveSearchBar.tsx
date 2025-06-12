@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useDebouncedCallback } from 'use-debounce';
 import { IoSearch, IoClose } from 'react-icons/io5';
 import apiClient from '@/app/api/axiosClient';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { PulseLoader } from 'react-spinners';
 
 interface Suggestion {
@@ -95,17 +95,17 @@ const PredictiveSearchBar = ({ placeholder = "Buscar productos...", onSearch }: 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const dropdownVariants = {
+  const dropdownVariants: Variants = {
     open: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 400, damping: 30 } },
     closed: { opacity: 0, y: -10, transition: { duration: 0.2 } },
   };
 
-  const listVariants = {
+  const listVariants: Variants = {
     visible: { transition: { staggerChildren: 0.05 } },
     hidden: {},
   };
 
-  const listItemVariants = {
+  const listItemVariants: Variants = {
     visible: { opacity: 1, x: 0 },
     hidden: { opacity: 0, x: -10 },
   };

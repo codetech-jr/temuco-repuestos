@@ -1,25 +1,23 @@
-// src/components/utils/StaggeredFadeIn.tsx
 "use client";
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import React from 'react';
 
-// --- PASO 1: (Opcional pero recomendado) Definir las props en una interfaz para más claridad ---
 interface StaggeredFadeInProps {
   children: React.ReactNode;
-  className?: string; // <-- AÑADIMOS className COMO PROPIEDAD OPCIONAL
+  className?: string;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
-      staggerChildren: 0.1, // Un retraso sutil entre cada elemento hijo
+      staggerChildren: 0.1,
     },
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, x: -20 },
   visible: {
     opacity: 1,
@@ -33,8 +31,8 @@ const itemVariants = {
 
 const StaggeredFadeIn = ({ children, className }: StaggeredFadeInProps) => {
   return (
-    // --- PASO 3: Aplicar 'className' al elemento principal ---
     <motion.div
+      className={className}
       variants={containerVariants}
       initial="hidden"
       animate="visible"

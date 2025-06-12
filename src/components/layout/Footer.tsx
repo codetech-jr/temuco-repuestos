@@ -1,9 +1,8 @@
-// src/components/layout/Footer.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { FaFacebookF, FaInstagram, FaWhatsapp, FaTiktok } from 'react-icons/fa';
 import { MdLocationOn, MdEmail, MdOutlineArrowOutward } from 'react-icons/md';
 import { BsClockFill } from 'react-icons/bs';
@@ -12,7 +11,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const logoFooter = "/img/logo/logo-temuco.png";
 
-  const footerContainerVariants = {
+  const footerContainerVariants: Variants = {
     hidden: {},
     visible: {
       transition: {
@@ -21,7 +20,7 @@ const Footer = () => {
     },
   };
 
-  const columnVariants = {
+  const columnVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
@@ -34,7 +33,7 @@ const Footer = () => {
     },
   };
 
-  const listItemVariants = {
+  const listItemVariants: Variants = {
     hidden: { opacity: 0, x: -10 },
     visible: { opacity: 1, x: 0 },
   };

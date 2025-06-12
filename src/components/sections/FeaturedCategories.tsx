@@ -1,7 +1,7 @@
 "use client";
 
-import { motion } from 'framer-motion';
-import { CategoryCard } from './CategoryCard'; // Asegúrate de que la ruta sea correcta
+import { motion, type Variants } from 'framer-motion';
+import { CategoryCard } from './CategoryCard';
 
 const categories = [
   {
@@ -31,7 +31,7 @@ const categories = [
 ];
 
 const FeaturedCategories = () => {
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -41,7 +41,7 @@ const FeaturedCategories = () => {
     },
   };
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
       y: 0,

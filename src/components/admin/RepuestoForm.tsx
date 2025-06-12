@@ -4,7 +4,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { PulseLoader } from "react-spinners";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 export interface RepuestoFormData {
   id?: string;
@@ -15,8 +15,8 @@ export interface RepuestoFormData {
   stock?: number | string;
   category: string;
   brand: string;
-  short_description?: string; // <-- AÑADE ESTA LÍNEA
-  long_description?: string;  // <-- Y ESTA LÍNEA
+  short_description?: string;
+  long_description?: string;
   image_url?: string;
   images?: string;
   features?: string;
@@ -45,8 +45,6 @@ const parseNumberInput = (val: unknown, isInteger = false): number | undefined |
   const num = isInteger ? parseInt(sVal, 10) : parseFloat(sVal);
   return isNaN(num) ? (typeof val === 'string' ? val : String(val)) : num;
 };
-
-// En: src/components/admin/RepuestoForm.tsx
 
 const formSchema = z.object({
   name: z.string().min(3, "El nombre es muy corto"),
@@ -183,9 +181,9 @@ export default function RepuestoForm({ initialData, onSubmit, isEditing = false 
   const btnTextXsRedClasses = "mt-1 text-xs text-red-600 hover:text-red-800";
   const errorTextClasses = "overflow-hidden mt-1 text-xs text-red-500";
 
-  const formContainerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } };
-  const formItemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200 } } };
-  const errorVariants = { initial: { opacity: 0, y: -10, height: 0 }, animate: { opacity: 1, y: 0, height: 'auto' }, exit: { opacity: 0, y: -10, height: 0 } };
+  const formContainerVariants: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } };
+  const formItemVariants: Variants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200 } } };
+  const errorVariants: Variants = { initial: { opacity: 0, y: -10, height: 0 }, animate: { opacity: 1, y: 0, height: 'auto' }, exit: { opacity: 0, y: -10, height: 0 } };
 
   return (
     <motion.form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 md:p-8 rounded-lg shadow-md" variants={formContainerVariants} initial="hidden" animate="visible">

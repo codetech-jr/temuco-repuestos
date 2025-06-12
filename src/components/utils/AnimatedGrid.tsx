@@ -1,20 +1,20 @@
 // Crea un nuevo archivo: src/components/utils/AnimatedGrid.tsx
 "use client";
 
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import React from 'react';
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05, // Retraso entre cada tarjeta
+      staggerChildren: 0.05,
     },
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.98 },
   visible: {
     opacity: 1,

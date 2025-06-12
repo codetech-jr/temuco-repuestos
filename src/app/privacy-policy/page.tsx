@@ -1,8 +1,7 @@
 "use client";
 
 import React from 'react';
-
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 const Placeholder = ({ children }: { children: React.ReactNode }) => (
   <span>{children}</span>
@@ -19,7 +18,7 @@ export default function PrivacyPolicyPage() {
 
   const fullWebsiteUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -29,14 +28,14 @@ export default function PrivacyPolicyPage() {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
-        ease: 'easeOut',
+        ease: 'easeInOut',
       },
     },
   };
@@ -67,10 +66,10 @@ export default function PrivacyPolicyPage() {
           >
             <motion.div variants={itemVariants}>
               <p>
-                Bienvenido/a a <Placeholder>{companyName}</Placeholder> (en adelante, &quot;nosotros&quot;, &quot;nuestro&quot; o &quot;la Empresa&quot;).
+                Bienvenido/a a <Placeholder>{companyName}</Placeholder> (en adelante, {`"nosotros", "nuestro" o "la Empresa"`}).
                 Nos comprometemos a proteger la privacidad de nuestros usuarios y clientes. Esta Política de Privacidad
                 explica cómo recopilamos, usamos, compartimos y protegemos su información personal cuando visita nuestro
-                catálogo en línea <a href={fullWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline"><Placeholder>{websiteUrl}</Placeholder></a> (en adelante, el &quot;Sitio&quot;) y
+                catálogo en línea <a href={fullWebsiteUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline"><Placeholder>{websiteUrl}</Placeholder></a> (en adelante, el {`"Sitio"`}) y
                 cuando solicita información sobre nuestros productos (repuestos, electrodomésticos) o servicios técnicos.
               </p>
               <p>
@@ -97,7 +96,7 @@ export default function PrivacyPolicyPage() {
                 <li>Páginas visitadas en nuestro Sitio y tiempo de permanencia.</li>
                 <li>Enlaces en los que hace clic.</li>
                 <li>Sitio web de referencia (si llegó a nuestro Sitio desde otro enlace).</li>
-                <li>Información recopilada a través de cookies y tecnologías similares (ver sección &quot;Cookies&quot;).</li>
+                <li>Información recopilada a través de cookies y tecnologías similares (ver sección {`"Cookies"`}).</li>
               </ul>
             </motion.div>
 

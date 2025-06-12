@@ -1,13 +1,11 @@
-// src/components/admin/AdminNavbarDashboard.tsx
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
-// ANIMACIÓN: Importamos motion y AnimatePresence
-import { motion, AnimatePresence } from 'framer-motion';
-import { IoClose, IoMenu } from 'react-icons/io5'; // Usaremos íconos de react-icons para facilitar la animación
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
+import { IoClose, IoMenu } from 'react-icons/io5';
 
 export default function AdminNavbarDashboard() {
   const { user, signOut, isLoading } = useAuth();
@@ -22,8 +20,7 @@ export default function AdminNavbarDashboard() {
     await signOut();
   };
   
-  // ANIMACIÓN: Variantes para el menú móvil y sus ítems
-  const mobileMenuVariants = {
+  const mobileMenuVariants: Variants = {
     open: {
       opacity: 1,
       y: 0,
@@ -36,7 +33,7 @@ export default function AdminNavbarDashboard() {
     },
   };
 
-  const mobileMenuItemVariants = {
+  const mobileMenuItemVariants: Variants = {
     open: { opacity: 1, x: 0 },
     closed: { opacity: 0, x: -20 },
   };
@@ -56,7 +53,6 @@ export default function AdminNavbarDashboard() {
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 {navItems.map((item) => (
-                  // ANIMACIÓN: Hover sutil en los links de escritorio
                   <motion.a
                     key={item.name}
                     href={item.href}
@@ -85,7 +81,6 @@ export default function AdminNavbarDashboard() {
                   Hola, {user.email.split('@')[0]}
                 </span>
               )}
-              {/* ANIMACIÓN: Botón con feedback visual en hover y tap */}
               <motion.button
                 onClick={handleSignOut}
                 className="bg-[#C8102E] text-[#F7FAFC] px-3 py-2 rounded-md text-sm font-medium"
@@ -98,7 +93,6 @@ export default function AdminNavbarDashboard() {
             </div>
           </div>
           <div className="-mr-2 flex md:hidden">
-            {/* ANIMACIÓN: Transición entre ícono de hamburguesa y 'X' */}
             <button
               type="button"
               className="relative h-10 w-10 inline-flex items-center justify-center p-2 rounded-md text-[#EBF4FF] hover:text-white focus:outline-none"
@@ -121,7 +115,6 @@ export default function AdminNavbarDashboard() {
         </div>
       </div>
 
-      {/* ANIMACIÓN: Menú móvil con entrada/salida y cascada */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 

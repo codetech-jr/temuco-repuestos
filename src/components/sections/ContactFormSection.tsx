@@ -1,18 +1,14 @@
-// src/components/sections/ContactFormSection.tsx
 "use client";
 
 import ContactInfoItem from '@/components/ui/ContactInfoItem';
 import ContactForm from '@/components/forms/ContactForm';
-// ANIMACIÓN: Importamos motion
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 import { BsTelephoneFill, BsClockFill } from 'react-icons/bs';
 import { MdEmail, MdLocationOn } from 'react-icons/md';
 
 const ContactFormSection = () => {
-
-  // ANIMACIÓN: Variantes para la columna de la izquierda y sus ítems
-  const leftColumnVariants = {
+  const leftColumnVariants: Variants = {
     hidden: {},
     visible: {
       transition: {
@@ -21,7 +17,7 @@ const ContactFormSection = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, x: -30 },
     visible: {
       opacity: 1,
@@ -35,7 +31,6 @@ const ContactFormSection = () => {
   };
 
   return (
-    // ANIMACIÓN: La sección aparece suavemente
     <motion.section 
       className="py-12 md:py-16 bg-[#F7FAFC]"
       initial="hidden"
@@ -47,7 +42,6 @@ const ContactFormSection = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16 items-start">
           
-          {/* Columna Izquierda: Animada en cascada */}
           <motion.div 
             className="space-y-8"
             variants={leftColumnVariants}
@@ -61,7 +55,6 @@ const ContactFormSection = () => {
               </p>
             </motion.div>
 
-            {/* Cada ContactInfoItem ahora está envuelto en un motion.div para la cascada */}
             <motion.div variants={itemVariants}>
               <ContactInfoItem
                 icon={<BsTelephoneFill size={20} className="text-[#002A7F]" />}
@@ -106,7 +99,6 @@ const ContactFormSection = () => {
             </motion.div>
           </motion.div>
 
-          {/* Columna Derecha: El formulario aparece después de la columna izquierda */}
           <motion.div 
             className="bg-white p-6 md:p-10 rounded-xl shadow-xl"
             initial={{ opacity: 0, scale: 0.95, y: 50 }}

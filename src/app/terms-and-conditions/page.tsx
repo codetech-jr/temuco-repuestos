@@ -2,7 +2,7 @@
 
 import Head from 'next/head';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 const TermsAndConditionsPage = () => {
   const companyName = "Temuco";
@@ -15,7 +15,7 @@ const TermsAndConditionsPage = () => {
   const legalJurisdictionCity = "Charallave";
   const legalJurisdictionCountry = "Miranda, Venezuela";
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -25,14 +25,14 @@ const TermsAndConditionsPage = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
-        ease: 'easeOut',
+        ease: 'easeInOut',
       },
     },
   };
@@ -68,7 +68,7 @@ const TermsAndConditionsPage = () => {
           >
             <motion.div variants={itemVariants}>
               <p>
-                Bienvenido al catálogo en línea de {companyName} (en adelante, &quot;la Empresa&quot;, &quot;nosotros&quot;, &quot;nuestro&quot;).
+                Bienvenido al catálogo en línea de {companyName} (en adelante, {`"la Empresa", "nosotros", "nuestro"`}).
                 Por favor, lee atentamente los siguientes Términos y Condiciones antes de utilizar nuestro catálogo
                 {catalogUrl ? ` disponible en ${catalogUrl}` : ' (físico/digital distribuido)'}.
               </p>
@@ -91,7 +91,7 @@ const TermsAndConditionsPage = () => {
               <p className="mt-2">
                 El catálogo es una herramienta informativa y no constituye una oferta de venta directa ni permite la
                 realización de transacciones de compra en línea. Su propósito es permitir a los usuarios (en adelante,
-                &quot;el Usuario&quot; o &quot;usted&quot;) conocer nuestros productos y servicios y facilitar la solicitud de cotizaciones
+                {`"el Usuario" o "usted"`}) conocer nuestros productos y servicios y facilitar la solicitud de cotizaciones
                 o la programación de servicios.
               </p>
             </motion.div>

@@ -3,9 +3,8 @@
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
-
 import { PulseLoader } from "react-spinners";
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 
 export interface ElectrodomesticoFormData {
   slug: string; name: string; short_description?: string; price: number | string;
@@ -34,8 +33,6 @@ const parseNumberInput = (val: unknown, isInteger = false): number | undefined |
   const num = isInteger ? parseInt(sVal, 10) : parseFloat(sVal);
   return isNaN(num) ? (typeof val === 'string' ? val : String(val)) : num;
 };
-
-// En: src/components/admin/ElectrodomesticoForm.tsx
 
 const formSchema = z.object({
   name: z.string().min(3, "El nombre es muy corto"),
@@ -179,10 +176,10 @@ export default function ElectrodomesticoForm({ initialData, onSubmit, isEditing 
   const previewImageClasses = "h-32 w-auto object-contain rounded-md border border-gray-300 p-1";
   const previewImageSmClasses = "h-24 w-auto object-contain rounded-md border border-gray-300 p-1";
   const btnTextXsRedClasses = "mt-1 text-xs text-red-600 hover:text-red-800";
-
-  const formContainerVariants = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } };
-  const formItemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200 } } };
-  const errorVariants = { initial: { opacity: 0, y: -10, height: 0 }, animate: { opacity: 1, y: 0, height: 'auto' }, exit: { opacity: 0, y: -10, height: 0 } };
+  
+  const formContainerVariants: Variants = { hidden: {}, visible: { transition: { staggerChildren: 0.04 } } };
+  const formItemVariants: Variants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200 } } };
+  const errorVariants: Variants = { initial: { opacity: 0, y: -10, height: 0 }, animate: { opacity: 1, y: 0, height: 'auto' }, exit: { opacity: 0, y: -10, height: 0 } };
 
   return (
     <motion.form 

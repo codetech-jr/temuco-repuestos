@@ -1,11 +1,8 @@
-// En src/components/sections/OurServices.tsx
 "use client";
 
 import ServiceCard, { Service } from '@/components/ui/ServiceCard';
-// ANIMACIÓN: Importamos motion
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
-// Íconos...
 import { FaWrench } from 'react-icons/fa';
 import { HiShieldCheck } from 'react-icons/hi2';
 import { MdAcUnit, MdOutlineSecurity } from 'react-icons/md';
@@ -64,19 +61,18 @@ const servicesData: Service[] = [
 ];
 
 const OurServices = () => {
-  // ANIMACIÓN: Definimos las variantes para el contenedor y las tarjetas
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1, // Un retraso sutil entre cada tarjeta
-        delayChildren: 0.2,   // Una pequeña espera antes de que la primera tarjeta aparezca
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
       },
     },
   };
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { y: 30, opacity: 0 },
     visible: {
       y: 0,
@@ -90,7 +86,6 @@ const OurServices = () => {
   };
 
   return (
-    // ANIMACIÓN: La sección entera aparece suavemente
     <motion.section 
       className="py-12 md:py-16 bg-[#F7FAFC]"
       initial="hidden"
@@ -103,14 +98,16 @@ const OurServices = () => {
         <h2 className="text-3xl md:text-4xl font-bold text-center text-[#002A7F] mb-10 md:mb-12">
           Nuestros Servicios
         </h2>
-        {/* ANIMACIÓN: El grid orquesta la animación en cascada */}
         <motion.div 
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           variants={containerVariants}
         >
           {servicesData.map((service) => (
-            // Pasamos las variantes a cada tarjeta
-            <ServiceCard key={service.id} service={{ ...service, variants: cardVariants }} />
+            // --- CORRECCIÓN DEFINITIVA AQUÍ ---
+            // Envolvemos ServiceCard en su propio motion.div
+            <motion.div key={service.id} variants={cardVariants}>
+              <ServiceCard service={service} />
+            </motion.div>
           ))}
         </motion.div>
       </div>
