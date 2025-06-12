@@ -62,7 +62,7 @@ const TestimonialCard: React.FC<{ testimonial: Testimonial; isSlider?: boolean; 
         </motion.div>
         
         <motion.p variants={itemVariants} className="text-gray-600 mb-6 flex-grow italic">
-          {`"{testimonial.quote}"`}
+          {testimonial.quote}
         </motion.p>
         
         <motion.div variants={itemVariants} className="flex items-center mt-auto pt-4 border-t border-gray-200">
