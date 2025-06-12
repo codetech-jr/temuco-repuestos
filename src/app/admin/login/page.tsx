@@ -1,4 +1,3 @@
-// src/app/admin/login/page.tsx
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
@@ -51,11 +50,28 @@ export default function LoginPage() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
-
-  const shakeAnimation = {
-    x: [0, -10, 10, -10, 10, -5, 5, 0],
-    transition: { duration: 0.5, ease: 'easeInOut' },
+  
+  // --- INICIO DE LA CORRECCIÓN DEFINITIVA ---
+  const errorMessageVariants = {
+    hidden: { 
+      opacity: 0, 
+      y: -10 
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      x: [0, -10, 10, -10, 10, -5, 5, 0], // El "shake"
+      transition: { 
+        duration: 0.5, 
+        ease: 'easeInOut' 
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: 10 
+    }
   };
+  // --- FIN DE LA CORRECCIÓN DEFINITIVA ---
 
   const inputBaseClasses = "mt-1 block w-full px-4 py-3 border rounded-lg shadow-sm sm:text-sm";
   const inputColorClasses = "border-[#718096] placeholder-gray-400 text-[#2D3748] bg-white";
@@ -97,16 +113,16 @@ export default function LoginPage() {
             {error && (
               <motion.p
                 key="error-message"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0, ...shakeAnimation }}
-                exit={{ opacity: 0, y: 10 }}
+                variants={errorMessageVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
                 className="px-4 py-3 text-sm text-center text-[#C8102E] bg-[#FEE2E2] border border-[#C8102E] rounded-lg"
               >
                 {error}
               </motion.p>
             )}
           </AnimatePresence>
-
          
           <motion.div variants={formItemVariants}>
             <motion.button
