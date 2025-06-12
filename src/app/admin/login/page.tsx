@@ -51,27 +51,17 @@ export default function LoginPage() {
     visible: { opacity: 1, y: 0 },
   };
   
-  // --- INICIO DE LA CORRECCIÓN DEFINITIVA ---
+  // --- VARIANTS REESCRITAS DE FORMA SEGURA ---
   const errorMessageVariants = {
-    hidden: { 
-      opacity: 0, 
-      y: -10 
-    },
+    hidden: { opacity: 0, y: -10 },
     visible: {
       opacity: 1,
       y: 0,
-      x: [0, -10, 10, -10, 10, -5, 5, 0], // El "shake"
-      transition: { 
-        duration: 0.5, 
-        ease: 'easeInOut' 
-      }
+      x: [0, -10, 10, -10, 10, -5, 5, 0], // El "shake" está aquí dentro
+      transition: { duration: 0.5 }
     },
-    exit: { 
-      opacity: 0, 
-      y: 10 
-    }
+    exit: { opacity: 0, y: 10 }
   };
-  // --- FIN DE LA CORRECCIÓN DEFINITIVA ---
 
   const inputBaseClasses = "mt-1 block w-full px-4 py-3 border rounded-lg shadow-sm sm:text-sm";
   const inputColorClasses = "border-[#718096] placeholder-gray-400 text-[#2D3748] bg-white";
@@ -149,4 +139,4 @@ export default function LoginPage() {
       </motion.div>
     </div>
   );
-}
+}git add .
