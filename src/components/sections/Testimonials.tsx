@@ -13,35 +13,35 @@ import 'swiper/css/navigation';
 const testimonialsData: Testimonial[] = [
   {
     id: 'testimonial1',
-    quote: 'Excelente servicio técnico. Repararon mi refrigerador en tiempo récord y a un precio muy razonable. Totalmente recomendados.',
-    authorName: 'Carmen Rodríguez',
-    authorDetail: 'Cliente desde 2019',
+    quote: 'Excelente atención, mucha variedad de productos, buenos precios y full accesibilidad para llegar a tienda. 100% recomendados.',
+    authorName: 'Alba Gómez',
+    authorDetail: 'Cliente desde 2024',
     rating: 5,
-    avatarUrl: '/img/testimonials/avatar1.png', // Cambiar a nombres de archivo más descriptivos si es posible
+    avatarUrl: '/img/testimonials/user-icon.png', // Cambiar a nombres de archivo más descriptivos si es posible
   },
   {
     id: 'testimonial2',
-    quote: 'Compré un aire acondicionado y lo instalaron el mismo día. El técnico fue muy profesional y me explicó todo el funcionamiento. Muy satisfecho.',
-    authorName: 'Roberto Méndez',
-    authorDetail: 'Cliente desde 2021',
+    quote: 'Muy buena la atención al público. excelentes precios y variedad. ⭐⭐⭐⭐⭐',
+    authorName: 'Adrián Sanchez',
+    authorDetail: 'Cliente desde 2024',
     rating: 5,
-    avatarUrl: '/img/avatar-male-1.png', // Cambiar a nombres de archivo más descriptivos
+    avatarUrl: '/img/testimonials/testimonial-user.png', // Cambiar a nombres de archivo más descriptivos
   },
   {
     id: 'testimonial3',
-    quote: 'Tienen todos los repuestos que necesitaba para mi negocio. Precios competitivos y asesoría técnica de primer nivel. Los recomiendo 100%.',
-    authorName: 'María Fernanda López',
-    authorDetail: 'Dueña de Restaurante',
+    quote: 'Excelente atención, amables y atentos.',
+    authorName: 'Bonnie Raga',
+    authorDetail: 'Cliente desde 2024',
     rating: 5,
-    avatarUrl: '/img/avatar-female-2.png', // Cambiar a nombres de archivo más descriptivos
+    avatarUrl: '/img/testimonials/user-icon.png', // Cambiar a nombres de archivo más descriptivos
   },
   {
     id: 'testimonial4',
-    quote: 'El mantenimiento preventivo ha sido clave para evitar problemas con mis equipos. Un servicio muy confiable y profesional.',
-    authorName: 'Juan Pérez',
-    authorDetail: 'Gerente de Operaciones',
+    quote: 'Buena atención y si no tienen el producto especifico te dicen donde se puede conseguir.',
+    authorName: 'Moises García',
+    authorDetail: 'Cliente desde el 2022',
     rating: 4,
-    avatarUrl: '/img/avatar-male-2.png', // Cambiar a nombres de archivo más descriptivos
+    avatarUrl: '/img/testimonials/testimonial-user-2.png', // Cambiar a nombres de archivo más descriptivos
   },
 ];
 

@@ -21,7 +21,7 @@ export default function ContactoPage() {
   const empresaNombre = "Temuco";
   const telefonoPrincipal = "+58412-3975545";
   const telefonoWhatsapp = "584123975545";
-  const emailPrincipal = "contacto@refrigeraciontemuco.cl";
+  const emailPrincipal = "Inversionestemuco784srl@gmail.com";
   const direccionPrincipal = "Calle 15-A Independencia, Charallave 1210, Miranda";
   const facebookLink = "https://www.facebook.com/temuco784ca";
   const instagramLink = "https://www.instagram.com/temuco784/";
@@ -77,7 +77,7 @@ export default function ContactoPage() {
               <div><ContactInfoItem icon={<MdEmail size={22} />} text={emailPrincipal} href={`mailto:${emailPrincipal}`} /></div>
               <div className="pt-4">
                 <h3 className="text-xl font-semibold text-[#002A7F] mb-3">Horario de Atención</h3>
-                <ContactInfoItem icon={<BsClockFill size={20} />} text={<>Lunes a Viernes: 8:00 - 17:30 hrs<br />Sábado: 8:00 - 16:30 hrs</>} />
+                <ContactInfoItem icon={<BsClockFill size={20} />} text={<>Lunes a Viernes: 7:30 - 17:30 hrs<br />Sábado: 7:30 - 16:30 hrs</>} />
               </div>
               <div className="pt-4">
                   <h3 className="text-xl font-semibold text-[#002A7F] mb-3">Síguenos</h3>

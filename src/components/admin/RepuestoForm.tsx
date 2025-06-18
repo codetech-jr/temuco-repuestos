@@ -36,8 +36,8 @@ interface RepuestoFormProps {
   isEditing?: boolean;
 }
 
-const REPUESTO_CATEGORY_OPTIONS = ["Filtros (Agua, Aire, Aceite)", "Correas y Bandas", "Motores y Componentes de Motor", "Tarjetas Electrónicas y Módulos de Control", "Bombas (Agua, Drenaje, Combustible)", "Mangueras, Tubos y Conexiones", "Sensores, Interruptores y Termostatos", "Perillas, Botones y Manijas", "Sellos y Juntas", "Rodamientos y Bujes", "Componentes de Suspensión y Dirección", "Partes de Carrocería y Estructura", "Herramientas Específicas", "Otros Repuestos"];
-const REPUESTO_BRAND_OPTIONS = ["Bosch (Repuestos)", "LG (Repuestos)", "Samsung (Repuestos)", "Whirlpool (Repuestos)", "Mabe (Repuestos)", "Electrolux (Repuestos)", "Oster (Repuestos)", "Sindelen (Repuestos)", "Thomas (Repuestos)", "Honda (Repuestos)", "Yamaha (Repuestos)", "Stihl (Repuestos)", "Makita (Repuestos)", "Genérico / Compatible", "Original del Fabricante (OEM)", "Otra Marca (Repuestos)"];
+const REPUESTO_CATEGORY_OPTIONS = [ "Lavadoras", "Refrigeración (Neveras)", "Aire Acondicionado y Ventilación", "Componentes Eléctricos y Cableado", "Materiales de Soldadura, Tuberías y Conexiones", "Motores y Bombas (Uso General)", "Herramientas y Equipos de Medición" ];
+const REPUESTO_BRAND_OPTIONS = ["Bosch (Repuestos)", "LG (Repuestos)", "Samsung (Repuestos)", "Whirlpool (Repuestos)", "Mabe (Repuestos)", "Electrolux (Repuestos)", "Oster (Repuestos)", "Sindelen (Repuestos)", "Thomas (Repuestos)", "Uniweld (Repuestos)", "Stihl (Repuestos)", "Makita (Repuestos)", "Genérico / Compatible", "Original del Fabricante (OEM)", "FM (Repuestos)", "Otra Marca (Repuestos)"];
 
 const parseNumberInput = (val: unknown, isInteger = false): number | undefined | string => {
   const sVal = String(val).trim();

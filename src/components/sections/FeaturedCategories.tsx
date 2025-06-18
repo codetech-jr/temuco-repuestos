@@ -14,13 +14,13 @@ const categories = [
     name: "Repuestos para Refrigeradores",
     description: "Las mejores marcas y modelos para su hogar o negocio.",
     imageUrl: "/img/category/category-refrigerator.png",
-    link: "/repuestos?category=Refrigeradores",
+    link: "/repuestos?category=Refrigeración%20(Neveras)",
   },
   {
     name: "Repuestos para Aires Acondicionados",
     description: "Soluciones de climatización para todos los espacios.",
     imageUrl: "/img/category/category-air-conditioner.png",
-    link: "/repuestos?category=Aires-acondicionados",
+    link: "/repuestos?category=Aire%20Acondicionado%20y%20Ventilación",
   },
   {
     name: "Repuestos Originales",

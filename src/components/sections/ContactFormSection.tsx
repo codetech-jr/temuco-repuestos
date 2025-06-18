@@ -66,8 +66,8 @@ const ContactFormSection = () => {
             <motion.div variants={itemVariants}>
               <ContactInfoItem
                 icon={<MdEmail size={20} className="text-[#002A7F]" />}
-                text="contacto@refrigeraciontemuco.cl"
-                href="mailto:contacto@refrigeraciontemuco.cl"
+                text="Inversionestemuco784srl@gmail.com"
+                href="mailto:Inversionestemuco784srl@gmail.com"
                 className="text-lg text-[#2D3748] hover:text-[#002266]"
               />
             </motion.div>
@@ -89,9 +89,9 @@ const ContactFormSection = () => {
                   icon={<BsClockFill size={20} className="text-[#002A7F]" />}
                   text={
                       <>
-                      Lunes a Viernes: 8:00 - 17:30 hrs
+                      Lunes a Viernes: 7:30 - 17:30 hrs
                       <br />
-                      Sábado: 8:00 - 16:30 hrs
+                      Sábado: 7:30 - 16:30 hrs
                       </>
                   }
                   className="text-base text-[#2D3748]"

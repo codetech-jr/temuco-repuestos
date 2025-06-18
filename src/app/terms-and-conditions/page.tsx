@@ -9,7 +9,7 @@ const TermsAndConditionsPage = () => {
   const catalogUrl = "Temuco784.com";
   const lastUpdateDate = "2025";
   const companyAddress = "Calle 15-A Independencia, Charallave 1210, Miranda";
-  const companyEmail = "contacto@refrigeraciontemuco.cl";
+  const companyEmail = "Inversionestemuco784srl@gmail.com";
   const companyPhone = "+58 412-3975545";
   const companyTaxId = "[Número de Identificación Fiscal o Registro Mercantil]";
   const legalJurisdictionCity = "Charallave";

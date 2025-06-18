@@ -22,7 +22,7 @@ export default function PoliticaDeCookiesPage() {
   // --- Personaliza tus datos aquí ---
   const companyName = "Temuco Repuestos y Servicios";
   const lastUpdatedDate = "17 de Octubre, 2023"; // Cambia esta fecha
-  const contactEmail = "contacto@refrigeraciontemuco.cl"; // Cambia este email
+  const contactEmail = "Inversionestemuco784srl@gmail.com "; // Cambia este email
 
   // --- Animaciones de Framer Motion ---
   const containerVariants: Variants = {

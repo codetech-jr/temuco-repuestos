@@ -118,11 +118,11 @@ const Footer = () => {
               </motion.li>
               <motion.li variants={listItemVariants} className="flex items-center">
                 <MdEmail className="w-5 h-5 mr-2.5 flex-shrink-0 text-[#718096]" />
-                <a href="mailto:contacto@refrigeraciontemuco.cl" className="hover:text-white transition-colors">contacto@refrigeraciontemuco.cl</a>
+                <a href="mailto:Inversionestemuco784srl@gmail.com " className="hover:text-white transition-colors">Inversionestemuco784srl@gmail.com</a>
               </motion.li>
               <motion.li variants={listItemVariants} className="flex items-start">
                 <BsClockFill className="w-5 h-5 mr-2.5 mt-0.5 flex-shrink-0 text-[#718096]" />
-                <span>Lunes a Viernes: 8:00 - 17:30 hrs<br/>Sábado: 8:00 - 16:30 hrs</span>
+                <span>Lunes a Viernes: 7:30 - 17:30 hrs<br/>Sábado: 7:30 - 16:30 hrs</span>
               </motion.li>
             </motion.ul>
           </motion.div>

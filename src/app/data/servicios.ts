@@ -23,6 +23,14 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <p>En Temuco Repuestos, ofrecemos un <strong>servicio técnico especializado</strong> para una amplia gama de electrodomésticos, incluyendo refrigeradores, lavadoras, secadoras, cocinas, hornos y más. Nuestros técnicos están altamente capacitados para diagnosticar y reparar fallas de manera eficiente, utilizando repuestos originales o de alta calidad para garantizar la durabilidad de la reparación.</p>
       <p>Entendemos la importancia de tus electrodomésticos en tu día a día, por eso nos esforzamos en ofrecer un servicio rápido y confiable.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">¿Por qué elegir nuestro servicio técnico?</h3>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Atención personalizada y asesoramiento técnico.</li>
+        <li>Diagnóstico preciso y presupuesto transparente.</li>
+        <li>Reparaciones con garantía de calidad.</li>
+        <li>Servicio a domicilio o en nuestro taller, según tu preferencia.</li>
+        <li>Amplia experiencia en marcas y modelos variados.</li>
+      </ul>
+      <p>Contamos con un equipo de técnicos certificados y con años de experiencia en el rubro, listos para atender tus necesidades.</p>
     `, // Puedes usar HTML simple aquí. Para Markdown, necesitarías un parser.
     imageUrl: '/img/services/servicio-tecnico.jpg', // Necesitarás estas imágenes
     benefits: [
@@ -50,6 +58,14 @@ export const serviciosDetalleData: ServicioDetalle[] = [
     longDescription: `
       <p>Asegura el óptimo funcionamiento y la validez de la garantía de tus equipos con nuestro servicio de instalación profesional. Realizamos la instalación de aires acondicionados (split, ventana, centrales), campanas de cocina, hornos empotrables y más, siguiendo estrictamente las especificaciones del fabricante.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">Nuestros servicios de instalación incluyen:</h3>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Instalación de aires acondicionados y calefacción.</li>
+        <li>Montaje de campanas extractoras y cocinas.</li>
+        <li>Configuración y puesta en marcha de equipos nuevos.</li>
+        <li>Asesoramiento sobre el uso y mantenimiento de los equipos instalados.</li>
+      </ul>
+      <br>
+      <p>Contamos con las herramientas y el personal calificado para realizar instalaciones seguras y eficientes, asegurando que tus equipos funcionen correctamente desde el primer día.</p>
     `,
     imageUrl: '/img/services/hero-bg3.jpg',
     benefits: [
@@ -68,8 +84,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
     shortDescription: 'Prolonga la vida útil de tus equipos y evita fallas costosas.',
     longDescription: `
       <p>El mantenimiento regular es clave para asegurar la eficiencia y durabilidad de tus electrodomésticos y sistemas de climatización. Ofrecemos planes de mantenimiento preventivo adaptados a tus necesidades, así como servicios de mantenimiento correctivo para solucionar problemas existentes.</p>
-      <h3 class="text-xl font-semibold mt-6 mb-3">Beneficios del mantenimiento:</h3>
-    `,
+      `,
     imageUrl: '/img/services/mantenimiento-preventivo.jpg',
     benefits: [
       "Prevención de averías mayores.",
@@ -88,6 +103,14 @@ export const serviciosDetalleData: ServicioDetalle[] = [
     longDescription: `
       <p>Si tu electrodoméstico adquirido con nosotros o de una marca asociada presenta fallas dentro del período de garantía, te asistimos en el proceso de gestión con el fabricante. Actuamos como servicio técnico autorizado para diversas marcas, facilitando el diagnóstico y la reparación cubierta por la garantía.</p>
       <h3 class="text-xl font-semibold mt-6 mb-3">¿Cómo funciona?</h3>
+      <p>Cuando un equipo presenta una falla cubierta por la garantía, seguimos estos pasos:</p>
+      <ol class="list-decimal list-inside space-y-2 my-4">
+        <li><strong>Recepción del equipo:</strong> Trae tu equipo a nuestro taller o solicita una visita a domicilio.</li>
+        <li><strong>Diagnóstico:</strong> Evaluamos el problema y verificamos si está cubierto por la garantía.</li>
+        <li><strong>Gestión con el fabricante:</strong> Nos encargamos de contactar al fabricante para coordinar la reparación o reemplazo.</li>
+        <li><strong>Reparación o reemplazo:</strong> Ejecutamos la reparación o te guiamos en el proceso de reemplazo según corresponda.</li>
+      </ol>
+      <p>Nos aseguramos de que el proceso sea lo más ágil y transparente posible, manteniéndote informado en cada etapa.</p>
     `,
     imageUrl: '/img/services/gestion-garantia.jpg',
     process: [
@@ -106,7 +129,6 @@ export const serviciosDetalleData: ServicioDetalle[] = [
     shortDescription: 'Te orientamos en la elección, uso y optimización de tus equipos.',
     longDescription: `
       <p>¿Tienes dudas sobre qué equipo comprar? ¿Necesitas optimizar el uso de tus electrodomésticos para ahorrar energía? Nuestro equipo de expertos te ofrece asesoría técnica personalizada para ayudarte a tomar las mejores decisiones, ya sea para tu hogar o negocio.</p>
-      <h3 class="text-xl font-semibold mt-6 mb-3">Podemos asesorarte en:</h3>
     `,
     imageUrl: '/img/services/asesoria.jpg',
     benefits: [
@@ -132,7 +154,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
         <li><strong>Coordina el envío:</strong> Indícanos tu dirección y coordinaremos el horario de entrega más conveniente.</li>
         <li><strong>Recibe tus productos:</strong> Nuestro personal de despacho te entregará los repuestos en la dirección acordada.</li>
       </ol>
-      <p>También ofrecemos opciones de envío a otras regiones a través de servicios de courier (Starken, Chilexpress, etc.). ¡Consúltanos!</p>
+      <p>Ofrecemos un servicio ágil y confiable, asegurando que tus repuestos lleguen en perfectas condiciones y a tiempo.</p>
     `,
     imageUrl: '/img/services/delivery.jpg', // Necesitarás esta imagen
     benefits: [

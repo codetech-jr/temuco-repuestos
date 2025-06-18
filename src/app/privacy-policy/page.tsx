@@ -11,7 +11,7 @@ export default function PrivacyPolicyPage() {
   const companyName = "Temuco";
   const websiteUrl = "Temuco784.com";
   const lastUpdatedDate = "2025";
-  const contactEmail = "contacto@refrigeraciontemuco.cl";
+  const contactEmail = "Inversionestemuco784srl@gmail.com";
   const companyAddress = "Calle 15-A Independencia, Charallave 1210, Miranda";
   const companyPhone = "+58 412-3975545";
   const minorAge = "18 años";

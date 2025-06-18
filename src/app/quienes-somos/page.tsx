@@ -16,9 +16,18 @@ const QuienesSomosCarousel = dynamic(
 );
 
 const nuestraHistoria = `
-  Fundada en el año 2000, Temuco nació con la visión de ofrecer soluciones integrales y de calidad para las necesidades de refrigeración y electrodomésticos en la región de Los Valles del Tuy.
-  Comenzamos como un pequeño taller familiar, y gracias a la confianza de nuestros clientes y nuestro compromiso con la excelencia, hemos crecido hasta convertirnos en un referente local.
-  A lo largo de los años, hemos adaptado nuestros servicios y ampliado nuestro catálogo de repuestos para mantenernos a la vanguardia de la tecnología y las demandas del mercado.
+  Temuco nace como un pequeño establecimiento 
+comercial (del tamaño de un garaje pequeño) donde se realizaba servicio técnico 
+de Ventiladores, Planchas, Secadores de Cabello, Cafeteras y se vendían 
+Repuestos Básicos de los mismos como también de cocinas y algunos de 
+Lavadora, se sitúa en la ciudad de Charallave en el año 1998 Actividad Económica 
+Registrada por Los Hermanos Gaviola Renato y Gaviola Américo, Su nombre 
+proviene de la ciudad natal del Principal Fundador de la actividad comercial 
+relacionada a estos tipos de productos que además se distribuían a nivel nacional 
+a baja escala en ciudades como Valencia, Caracas, Barquisimeto, Maracay, Cuá y 
+Ocumare por los años 1986 el señor Javier Gaviola padre de los hermanos Gaviola, 
+persona que inspiro he inspira actualmente a la Marca y su vocación a la 
+excelencia, competitividad y compromiso.
 `;
 
 const mision = `
@@ -28,17 +37,16 @@ const mision = `
 `;
 
 const vision = `
-  Ser la empresa líder y de mayor confianza en Temuco y la región en la provisión de repuestos,
+  Ser la empresa líder y de mayor confianza en Charallave y la región en la provisión de repuestos,
   servicio técnico y venta de electrodomésticos, reconocida por nuestra innovación,
   compromiso con el cliente y contribución al bienestar de la comunidad.
 `;
 
 const valores = [
-  { nombre: "Calidad", descripcion: "Nos esforzamos por ofrecer productos y servicios que cumplan con los más altos estándares." },
-  { nombre: "Confianza", descripcion: "Construimos relaciones duraderas basadas en la honestidad y la transparencia." },
-  { nombre: "Compromiso", descripcion: "Estamos dedicados a la satisfacción de nuestros clientes y a la solución de sus necesidades." },
-  { nombre: "Innovación", descripcion: "Buscamos constantemente nuevas formas de mejorar y ofrecer lo último en tecnología." },
-  { nombre: "Servicio al Cliente", descripcion: "Nuestros clientes son nuestra prioridad, y nos dedicamos a brindarles la mejor atención." },
+  { nombre: "Empatía", descripcion: "Entendemos que detrás de cada llamada hay una persona buscando tranquilidad. Por eso, nuestro servicio es cercano y honesto, enfocado en resolver tu problema y ganar tu confianza." },
+  { nombre: "Respeto", descripcion: "Más que palabras, nuestro respeto se demuestra con hechos. Respetamos tu confianza con diagnósticos honestos, tu hogar con un trabajo limpio y tu criterio, dándote siempre la información completa para que elijas lo mejor." },
+  { nombre: "Ética Profesional", descripcion: "Nuestra ética es un compromiso de honestidad contigo. Te garantizamos diagnósticos certeros, precios justos y reparaciones de calidad. Jamás te venderemos algo innecesario, pues tu confianza es lo más importante para nosotros." },
+  { nombre: "Servicio", descripcion: "Nuestra vocación de servicio significa que nos apasiona resolver tus problemas. Nos comprometemos a ir más allá para asegurar tu completa satisfacción, restaurando no solo tus aparatos, sino también tu paz mental." },
 ];
 
 const equipo = [

@@ -28,10 +28,13 @@ const serviciosSubLinks: NavLink[] = serviciosDetalleData.map(servicio => ({
 }));
 
 const repuestosSubLinks: NavLink[] = [
-  { href: "/repuestos?category=Compresores", label: "Compresores" },
-  { href: "/repuestos?category=Termostatos", label: "Termostatos" },
-  { href: "/repuestos?category=Filtros", label: "Filtros Secadores" },
-  { href: "/repuestos?category=Capacitores", label: "Capacitores" },
+  { href: "/repuestos?category=Lavadoras", label: "Lavadoras" },
+  { href: "/repuestos?category=Refrigeración (Neveras)", label: "Refrigeración (Neveras)" },
+  { href: "/repuestos?category=Aire Acondicionado y Ventilación", label: "Aire Acondicionado y Ventilación" },
+  { href: "/repuestos?category=Componentes Eléctricos y Cableado", label: "Componentes Eléctricos y Cableado" },
+  { href: "/repuestos?category=Materiales de Soldadura, Tuberías y Conexiones", label: "Materiales de Soldadura, Tuberías y Conexiones" },
+  { href: "/repuestos?category=Motores y Bombas (Uso General)", label: "Motores y Bombas (Uso General)" },
+  { href: "/repuestos?category=Herramientas y Equipos de Medición", label: "Herramientas y Equipos de Medición" },
   { href: "/repuestos?tipo=originales", label: "Repuestos Originales" },
   { href: "/repuestos", label: "Ver Todos los Repuestos" },
 ];
