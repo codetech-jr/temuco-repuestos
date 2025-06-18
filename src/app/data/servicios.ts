@@ -67,7 +67,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       <br>
       <p>Contamos con las herramientas y el personal calificado para realizar instalaciones seguras y eficientes, asegurando que tus equipos funcionen correctamente desde el primer día.</p>
     `,
-    imageUrl: '/img/services/hero-bg3.jpg',
+    imageUrl: '/img/services/hero-bg3.png',
     benefits: [
       "Cumplimiento de normativas y estándares del fabricante.",
       "Personal calificado y herramientas adecuadas.",
@@ -112,7 +112,7 @@ export const serviciosDetalleData: ServicioDetalle[] = [
       </ol>
       <p>Nos aseguramos de que el proceso sea lo más ágil y transparente posible, manteniéndote informado en cada etapa.</p>
     `,
-    imageUrl: '/img/services/gestion-garantia.jpg',
+    imageUrl: '/img/services/gestion-garantias.jpg',
     process: [
         { step: "Verificación", description: "Revisamos la documentación y el estado del equipo." },
         { step: "Diagnóstico Técnico", description: "Determinamos si la falla está cubierta por la garantía." },
