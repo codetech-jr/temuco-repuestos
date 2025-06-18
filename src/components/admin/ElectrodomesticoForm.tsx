@@ -25,7 +25,7 @@ interface ElectrodomesticoFormProps {
 }
 
 const CATEGORY_OPTIONS = [ "Lavadoras", "Refrigeradores", "Cocinas", "Hornos", "Microondas", "Aires Acondicionados", "Televisores", "Aspiradoras", "Licuadoras", "Batidoras", "Cafeteras", "Otros Electrodomésticos" ];
-const BRAND_OPTIONS = [ "LG", "Samsung", "Whirlpool", "Mabe", "Electrolux", "Bosch", "Sony", "Panasonic", "Oster", "Sindelen", "Thomas", "Otra Marca" ];
+const BRAND_OPTIONS = [ "LG", "Samsung", "Whirlpool", "Mabe", "Electrolux", "Bosch", "Sony", "Panasonic", "Oster", "Sindelen", "Thomas", "Cowplandt","Otra Marca" ];
 
 const parseNumberInput = (val: unknown, isInteger = false): number | undefined | string => {
   const sVal = String(val).trim();
