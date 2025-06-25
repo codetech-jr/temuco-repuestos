@@ -51,17 +51,47 @@ const valores = [
 
 const equipo = [
   {
-    nombre: "Juan Pérez",
-    rol: "Fundador y Técnico Principal",
-    bio: "Con más de 20 años de experiencia en refrigeración, Juan lidera nuestro equipo técnico con pasión y conocimiento.",
-    imageUrl: "/images/placeholder/avatar-male.png"
+    nombre: "Michel Gaviola",
+    rol: "Gerente de Operaciones",
+    bio: "Como Gerente de Operaciones, Michel Gaviola lidera nuestro equipo técnico y de ventas para ofrecer soluciones rápidas, eficientes y de la más alta calidad en cada servicio.",
+    imageUrl: "/img/team/team5.jpg"
   },
   {
-    nombre: "María González",
+    nombre: "Víctor Guzmán",
+    rol: "Encargado de H2O",
+    bio: "Victor Guzmán es el encargado de H2O, garantiza agua mineral de máxima calidad, destacando por su inigualable atención personalizada y su profundo compromiso con la comunidad.",
+    imageUrl: "/img/team/team3.jpg"
+  },
+  {
+    nombre: "Victoria Chávez",
+    rol: "Supervisora de inventario y compras",
+    bio: "Victoria Chávez es una experta Supervisora de Inventario y Compras, reconocida por su liderazgo en la optimización de stock y su habilidad para negociar estratégicamente con proveedores.",
+    imageUrl: "/img/team/team1.jpg"
+  },
+  {
+    nombre: "Vicgleidy Farrera",
+    rol: "Supervisora General de Ventas",
+    bio: "Vicgleidy Farrera es una apasionada Supervisora General de Ventas, experta en liderar y motivar equipos para superar metas mediante estrategias comerciales innovadoras y un fuerte enfoque en el cliente.",
+    imageUrl: "/img/team/team2.jpg"
+  },
+  {
+    nombre: "José Ramon",
+    rol: "Servicio Técnico",
+    bio: "José Ramón es nuestro experto en bombas de agua. Con gran precisión, se encarga de la instalación, reparación y mantenimiento para asegurar que su sistema funcione de manera óptima y fiable.",
+    imageUrl: "/img/team/team4.jpg"
+  },
+  {
+    nombre: "Aranza",
     rol: "Atención al Cliente y Ventas",
     bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
     imageUrl: "/images/placeholder/avatar-female.png"
-  }
+  },
+  {
+    nombre: "Ronnie",
+    rol: "Atención al Cliente y Ventas",
+    bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
+    imageUrl: "/images/placeholder/avatar-female.png"
+  },
 ];
 
 const carruselImages = [
