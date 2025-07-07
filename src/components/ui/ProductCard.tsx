@@ -27,31 +27,30 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
   };
 
   const formatPrice = (amount: number) => {
-    return new Intl.NumberFormat('es-CL', { 
-      style: 'currency', 
-      currency: 'CLP', 
-      minimumFractionDigits: 0 
+    return new Intl.NumberFormat('es-CL', {
+      style: 'currency',
+      currency: 'CLP',
+      minimumFractionDigits: 0
     }).format(amount);
   };
 
-  const tagBgColor = 
-          product.tag === 'Oferta' ? 'bg-[#C8102E]' : 
-          product.tag === 'Nuevo' ? 'bg-[#002A7F]' : 
-          product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' : 
+  const tagBgColor =
+    product.tag === 'Oferta' ? 'bg-[#C8102E]' :
+      product.tag === 'Nuevo' ? 'bg-[#002A7F]' :
+        product.tag === 'Más Vendido' ? 'bg-[#DD6B20]' :
           product.tag === 'Original' ? 'bg-green-600' :
-          product.tag === 'Alternativo' ? 'bg-gray-500' :
-          '';
+            product.tag === 'Alternativo' ? 'bg-gray-500' :
+              '';
   const tagTextColor = 'text-[#F7FAFC]';
-  
+
   const imageToDisplay = product.imageUrl || PLACEHOLDER_IMAGE_URL;
   const altTextToDisplay = product.altText || product.name || 'Imagen de producto';
 
   return (
-    <div 
-      className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full 
+    <div
+      className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full
                  transition-all duration-300 hover:shadow-xl hover:transform hover:-translate-y-1
-                 w-full max-w-xs sm:max-w-sm mx-auto relative cursor-pointer"
-      onClick={handleProductClick}
+                 w-full max-w-xs sm:max-w-sm mx-auto relative"
     >
       <div className="absolute top-2 right-2 z-10" onClick={(e) => e.stopPropagation()}>
         <WishlistButton
@@ -60,7 +59,12 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
         />
       </div>
 
-      <Link href={product.link} className="block group flex-grow flex flex-col">
+      {/* Enlace principal para la imagen y el texto (navega en la misma pestaña) */}
+      <Link
+        href={product.link}
+        onClick={handleProductClick}
+        className="block group flex-grow flex flex-col cursor-pointer"
+      >
         <div className="w-full h-48 sm:h-52 md:h-56 relative overflow-hidden bg-gray-200">
           <Image
             src={imageToDisplay}
@@ -77,10 +81,10 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
             </span>
           )}
         </div>
-      
+
         <div className="p-3 sm:p-4 flex flex-col flex-grow">
-          <h3 
-            className="text-sm sm:text-base font-semibold text-[#2D3748] mb-1 leading-tight 
+          <h3
+            className="text-sm sm:text-base font-semibold text-[#2D3748] mb-1 leading-tight
                        min-h-[2.8em] sm:min-h-[2.6em] line-clamp-2"
             title={product.name}
           >
@@ -99,6 +103,7 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
           </div>
 
           <div className="mb-3">
+            <p className="text-lg sm:text-xl font-bold text-[#C8102E]">REF.</p>
             <span className="text-lg sm:text-xl font-bold text-[#002A7F]">{formatPrice(product.price)}</span>
             {product.originalPrice && product.originalPrice > product.price && (
               <span className="ml-2 text-xs line-through text-[#718096]">
@@ -106,16 +111,23 @@ const ProductCard = ({ product, productType }: ProductCardProps) => {
               </span>
             )}
           </div>
-
-          <div className="mt-auto pt-2">
-            <div className="w-full bg-[#C8102E] hover:bg-[#002266] text-[#F7FAFC] 
-                          font-semibold py-2 px-3 rounded text-center transition duration-300 
-                          text-xs sm:text-sm">
-              Ver Detalles
-            </div>
-          </div>
         </div>
       </Link>
+
+      {/* Botón "Ver Detalles" que abre una NUEVA PESTAÑA gracias a target="_blank" */}
+      <div className="p-3 sm:p-4 pt-0 mt-auto">
+        <Link
+          href={product.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleProductClick}
+          className="block w-full bg-[#C8102E] hover:bg-[#002266] text-[#F7FAFC]
+                     font-semibold py-2 px-3 rounded text-center transition duration-300
+                     text-xs sm:text-sm"
+        >
+          Ver Detalles
+        </Link>
+      </div>
     </div>
   );
 };

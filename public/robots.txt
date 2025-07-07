@@ -6,4 +6,4 @@ Disallow: /admin/ # Muy importante no permitir el rastreo de tu panel de admin
 Disallow: /api/   # Generalmente no quieres que se indexen tus endpoints de API
 
 # Sitemap (asegúrate de que la URL sea la de tu sitio en producción)
-Sitemap: https://www.temuco784.com/sitemap.xml
+Sitemap: https://temuco-repuestos.vercel.app/sitemap.xml

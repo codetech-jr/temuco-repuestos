@@ -33,7 +33,7 @@ export interface Repuesto {
   tag?: string;
 }
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 20;
 
 interface RepuestosPageProps {
   searchParams: {

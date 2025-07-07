@@ -81,17 +81,23 @@ const equipo = [
     imageUrl: "/img/team/team4.jpg"
   },
   {
-    nombre: "Aranza",
-    rol: "Atención al Cliente y Ventas",
+    nombre: "Aranxa Perroni",
+    rol: "Asesora de ventas",
     bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
-    imageUrl: "/images/placeholder/avatar-female.png"
+    imageUrl: "/img/team/team6.jpg"
   },
   {
-    nombre: "Ronnie",
-    rol: "Atención al Cliente y Ventas",
+    nombre: "Marian Meléndez",
+    rol: "Auditora general",
     bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
-    imageUrl: "/images/placeholder/avatar-female.png"
+    imageUrl: "/img/team/team7.jpg"
   },
+  {
+    nombre: "Anamindy Griman",
+    rol: "subgerente de Operaciones",
+    bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
+    imageUrl: "/img/team/team8.jpg"
+  }
 ];
 
 const carruselImages = [

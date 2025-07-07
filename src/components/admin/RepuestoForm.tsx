@@ -1,3 +1,5 @@
+// RepuestoForm.tsx
+
 "use client";
 
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
@@ -57,7 +59,7 @@ const formSchema = z.object({
   original_price: z.preprocess(val => parseNumberInput(val, false), z.number({invalid_type_error: "Precio original debe ser número"}).positive("Precio original debe ser positivo").optional().nullable()),
   image_url: z.string().url("URL de imagen principal (texto) inválida").optional().nullable().or(z.literal('')),
   images: z.string().optional().transform(val => val ? val.split(',').map(i => i.trim()).filter(i => i.length > 0 && /^https?:\/\/.+/.test(i)) : []),
-  description: z.string().optional().nullable(),
+  short_description: z.string().optional().nullable(),
   is_active: z.boolean().optional().default(true),
 });
 
@@ -73,27 +75,56 @@ export default function RepuestoForm({ initialData, onSubmit, isEditing = false 
 
   useEffect(() => {
     if (initialData) {
+      // --- LÓGICA DE TRANSFORMACIÓN PARA ESPECIFICACIONES ---
+      let specsForTextarea = '';
+      if (initialData.specifications) {
+        if (typeof initialData.specifications === 'string') {
+          // Si ya es un string, lo usamos tal cual (poco probable, pero seguro)
+          specsForTextarea = initialData.specifications;
+        } else if (Array.isArray(initialData.specifications)) {
+          // Si es un array [ {key, value}, ... ], lo transformamos a un objeto { key: value, ... }
+          const specsObject = initialData.specifications.reduce((acc, item) => {
+            if (item && typeof item.key === 'string') {
+              acc[item.key] = item.value;
+            }
+            return acc;
+          }, {} as Record<string, any>);
+          
+          // Ahora convertimos el objeto transformado a un string JSON formateado para el textarea
+          specsForTextarea = JSON.stringify(specsObject, null, 2);
+        }
+      }
+  
       setFormData({
-        name: initialData.name || '', slug: initialData.slug || '',
+        name: initialData.name || '',
+        slug: initialData.slug || '',
         price: initialData.price !== undefined ? String(initialData.price) : '',
-        category: initialData.category || '', brand: initialData.brand || '',
+        category: initialData.category || '',
+        brand: initialData.brand || '',
         stock: initialData.stock !== undefined ? String(initialData.stock) : '',
         short_description: initialData.short_description || '',
         original_price: initialData.original_price !== undefined ? String(initialData.original_price) : '',
         image_url: initialData.image_url || '',
         features: typeof initialData.features === 'string' ? initialData.features : (Array.isArray(initialData.features) ? initialData.features.join(', ') : ''),
-        specifications: typeof initialData.specifications === 'string' ? initialData.specifications : (initialData.specifications ? JSON.stringify(initialData.specifications, null, 2) : ''),
+        
+        // *** USA LA VARIABLE TRANSFORMADA AQUÍ ***
+        specifications: specsForTextarea, 
+  
         images: typeof initialData.images === 'string' ? initialData.images : (Array.isArray(initialData.images) ? initialData.images.join(', ') : ''),
         is_active: initialData.is_active === undefined ? true : initialData.is_active,
         is_original: initialData.is_original === undefined ? false : initialData.is_original,
-        long_description: initialData.long_description || '', id: initialData.id, created_at: initialData.created_at,
+        long_description: initialData.long_description || '',
+        id: initialData.id,
+        created_at: initialData.created_at,
       });
+  
       if (initialData.image_url) setMainImagePreview(initialData.image_url);
       if (initialData.images) {
         const imagesArray = Array.isArray(initialData.images) ? initialData.images : (typeof initialData.images === 'string' ? initialData.images.split(',').map(img => img.trim()).filter(img => img) : []);
         setAdditionalImagesPreview(imagesArray.filter(img => typeof img === 'string'));
       }
     } else {
+      // Lógica para resetear el formulario (sin cambios)
       setFormData({ name: '', slug: '', price: '', category: '', brand: '', stock: '', short_description: '', original_price: '', image_url: '', features: '', specifications: '', images: '', is_active: true, is_original: false, long_description: '' });
       setMainImageFile(null); setMainImagePreview(null);
       setAdditionalImageFiles(null); setAdditionalImagesPreview([]);
@@ -134,38 +165,76 @@ export default function RepuestoForm({ initialData, onSubmit, isEditing = false 
     }
   };
 
+  // =========================================================================================
+  // ========================== FUNCIÓN HANDLESUBMIT CORREGIDA ===============================
+  // =========================================================================================
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true);
     setErrors({});
+  
     const validationResult = formSchema.safeParse(formData);
     if (!validationResult.success) {
       setErrors(validationResult.error.flatten().fieldErrors);
       setIsSubmitting(false);
       return;
     }
-    setIsSubmitting(true);
+  
     const formDataToSend = new FormData();
+  
+    // Añadir todos los campos validados, excepto los que se manejan manualmente
     Object.entries(validationResult.data).forEach(([key, value]) => {
-      if ((key === 'image_url' && mainImageFile) || (key === 'images' && additionalImageFiles)) return;
-      if (Array.isArray(value)) {
-        if (value.length > 0) formDataToSend.append(key, value.join(','));
-      } else if (value !== null && value !== undefined) {
+      if (['image_url', 'images', 'specifications', 'features', 'long_description'].includes(key)) return;
+      if (value !== null && value !== undefined) {
         formDataToSend.append(key, String(value));
       }
     });
+  
+    // Manejo manual de campos opcionales y de formato especial
     if (formData.long_description) formDataToSend.append('long_description', formData.long_description);
-    if (formData.specifications) formDataToSend.append('specifications', formData.specifications);
-    if (mainImageFile) formDataToSend.append('mainImage', mainImageFile);
-    if (additionalImageFiles) { Array.from(additionalImageFiles).forEach(file => formDataToSend.append('additionalImages', file)); }
-
+    if (formData.features) formDataToSend.append('features', formData.features);
+  
+    // LÓGICA CORRECTA PARA ESPECIFICACIONES
+    if (formData.specifications && formData.specifications.trim() !== '{}' && formData.specifications.trim() !== '') {
+      try {
+        const specificationsObject = JSON.parse(formData.specifications);
+        const specificationsArray = Object.entries(specificationsObject).map(([key, value]) => ({
+          key: key,
+          value: String(value)
+        }));
+        formDataToSend.append('specifications', JSON.stringify(specificationsArray));
+      } catch (error) {
+        setErrors(prev => ({ ...prev, specifications: { _errors: ['El formato JSON de las especificaciones es inválido.'] } }));
+        setIsSubmitting(false);
+        return;
+      }
+    }
+  
+    // Manejo de imágenes
+    if (mainImageFile) {
+      formDataToSend.append('mainImage', mainImageFile);
+    } else if (formData.image_url) {
+      formDataToSend.append('image_url', formData.image_url);
+    }
+  
+    if (additionalImageFiles) {
+      Array.from(additionalImageFiles).forEach(file => formDataToSend.append('additionalImages', file));
+    } else if (formData.images) {
+      formDataToSend.append('images', formData.images);
+    }
+  
+    // Log para depuración (opcional)
+    // for (let pair of formDataToSend.entries()) {
+    //   console.log(pair[0]+ ': ' + pair[1]);
+    // }
+  
     try {
       const success = await onSubmit(formDataToSend, true);
       if (success && !isEditing) {
-        setFormData({ name: '', slug: '', price: '', category: '', brand: '', stock: '', short_description: '', original_price: '', image_url: '', features: '', specifications: '', images: '', is_active: true, is_original: false, long_description: '' });
+        // Resetear formulario
+        setFormData({ name: '', slug: '', price: '', category: '', brand: '', stock: '', short_description: '', original_price: '', image_url: '', features: '', specifications: '{\n  \n}', images: '', is_active: true, is_original: false, long_description: '' });
         setMainImageFile(null); setMainImagePreview(null);
         setAdditionalImageFiles(null); setAdditionalImagesPreview([]);
-        const mainInput = document.getElementById('mainImageFile_repuesto_input') as HTMLInputElement; if (mainInput) mainInput.value = '';
-        const additionalInput = document.getElementById('additionalImageFiles_repuesto_input') as HTMLInputElement; if (additionalInput) additionalInput.value = '';
       }
     } finally {
       setIsSubmitting(false);
