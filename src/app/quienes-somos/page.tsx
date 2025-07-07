@@ -83,19 +83,19 @@ const equipo = [
   {
     nombre: "Aranxa Perroni",
     rol: "Asesora de ventas",
-    bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
+    bio: "Aranxa Perroni, Asesora de Ventas experta en crear relaciones de confianza. Entiende las necesidades del cliente para ofrecer soluciones personalizadas, garantizando una experiencia de compra y resultados excepcionales.",
     imageUrl: "/img/team/team6.jpg"
   },
   {
     nombre: "Marian Meléndez",
     rol: "Auditora general",
-    bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
+    bio: "Marian Meléndez, de Auditoría General, es una profesional metódica y objetiva. Se especializa en evaluar procesos y controles para asegurar el cumplimiento normativo, la integridad y la eficiencia organizacional.",
     imageUrl: "/img/team/team7.jpg"
   },
   {
     nombre: "Anamindy Griman",
     rol: "subgerente de Operaciones",
-    bio: "María se encarga de que cada cliente reciba la mejor asesoría y encuentre lo que necesita.",
+    bio: "Anamindy Griman, Subgerente de Operaciones, es una líder estratégica enfocada en la eficiencia. Dirige equipos y optimiza procesos para garantizar la máxima calidad y un flujo de trabajo impecable.",
     imageUrl: "/img/team/team8.jpg"
   }
 ];
