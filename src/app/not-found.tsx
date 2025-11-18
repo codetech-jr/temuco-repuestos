@@ -9,7 +9,7 @@ export default function NotFound() {
       
       <div className="mb-8">
         <Image 
-          src="/img/logo/logo-temuco-final.png" // Ajusta la ruta a tu logo
+          src="/img/logo/repuestos-temuco.png" // Ajusta la ruta a tu logo
           alt="Temuco Repuestos Logo"
           width={180}
           height={60}

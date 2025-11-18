@@ -93,7 +93,7 @@ const Header = () => {
           {/* ---- CAMBIO AQUÍ ---- */}
           {/* Se añaden clases para hacer el logo responsivo */}
           <Image 
-            src="/img/logo/logo-temuco-final-2.png" 
+            src="/img/logo/repuestos-temuco.png" 
             alt="Temuco Logo" 
             width={350} 
             height={60} 
